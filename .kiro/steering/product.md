@@ -1,18 +1,33 @@
 # Product Overview
 
-SpaceTycoon is a space-themed tycoon game project currently in early development.
+Space Transport Tycoon is a web-based strategy game where players build and manage a space transport empire.
 
 ## Core Concept
-- Genre: Tycoon/Business simulation game
-- Theme: Space exploration and commerce
-- Target: Players manage space-based business operations
+- **Genre**: Strategy/Tycoon/Business Simulation
+- **Theme**: Space commerce and fleet management
+- **Target Audience**: Strategy game enthusiasts who enjoy economic simulation
+- **Core Loop**: Buy low → Transport → Sell high → Expand fleet → Repeat
 
-## Development Status
-- Early stage project
-- Repository structure is minimal and ready for initial development
-- No specific platform or technology stack has been established yet
+## Current Development Status
+- **Phase**: Working Prototype (v0.1)
+- **Platform**: Web-based (HTML5/JavaScript)
+- **Playable Features**: 3-planet galaxy, basic trading, fuel management
+- **Location**: JSPrototype/ folder contains functional game
 
-## Key Considerations
-- Game should focus on strategic resource management
-- Space theme suggests mechanics around exploration, trading, and expansion
-- Tycoon genre implies economic simulation and progression systems
+## Key Game Pillars
+1. **Economic Strategy**: Dynamic supply/demand pricing creates meaningful trade decisions
+2. **Resource Management**: Balance fuel costs, cargo capacity, and profit margins  
+3. **Progressive Growth**: Start small, reinvest profits to expand operations
+4. **Spatial Strategy**: Route planning and distance optimization matter
+
+## Success Metrics
+- Players should feel progression through fleet expansion
+- Economic decisions should have clear risk/reward tradeoffs
+- Game should be accessible to newcomers but offer strategic depth
+- Core gameplay loop should be engaging within first 5 minutes
+
+## Design Constraints
+- Keep UI clean and informative - avoid information overload
+- Maintain realistic economic principles (supply/demand)
+- Ensure mobile-friendly responsive design
+- Prioritize gameplay over graphics complexity

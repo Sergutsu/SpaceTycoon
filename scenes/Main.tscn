@@ -1,0 +1,176 @@
+[gd_scene load_steps=4 format=3 uid="uid://bqxvyxqhqvhxj"]
+
+[ext_resource type="Script" uid="uid://cqnkc5o75nf4y" path="res://scripts/GameManager.gd" id="1_0k8xj"]
+[ext_resource type="Script" uid="uid://hpjxunnrhlpr" path="res://scripts/UI/MainUI.gd" id="2_3h4kl"]
+[ext_resource type="Script" uid="uid://bjtyahncabo27" path="res://scripts/UI/GalaxyMap.gd" id="3_2m5nl"]
+
+[node name="Main" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="GameManager" type="Node" parent="."]
+script = ExtResource("1_0k8xj")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.047, 0.047, 0.18, 1)
+
+[node name="MainUI" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("2_3h4kl")
+
+[node name="Header" type="Panel" parent="MainUI"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 80.0
+grow_horizontal = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="MainUI/Header"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 10.0
+offset_right = -20.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Title" type="Label" parent="MainUI/Header/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Space Transport Tycoon"
+
+[node name="Stats" type="HBoxContainer" parent="MainUI/Header/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+alignment = 2
+
+[node name="CreditsLabel" type="Label" parent="MainUI/Header/HBoxContainer/Stats"]
+layout_mode = 2
+text = "Credits: $10000"
+
+[node name="FuelLabel" type="Label" parent="MainUI/Header/HBoxContainer/Stats"]
+layout_mode = 2
+text = "Fuel: 100"
+
+[node name="CargoLabel" type="Label" parent="MainUI/Header/HBoxContainer/Stats"]
+layout_mode = 2
+text = "Cargo: 0/50"
+
+[node name="GameArea" type="HSplitContainer" parent="MainUI"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 90.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="GalaxyMap" type="Control" parent="MainUI/GameArea"]
+layout_mode = 2
+size_flags_horizontal = 3
+script = ExtResource("3_2m5nl")
+
+[node name="Background" type="ColorRect" parent="MainUI/GameArea/GalaxyMap"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.1, 0.1, 0.3, 1)
+
+[node name="Panels" type="VBoxContainer" parent="MainUI/GameArea"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="LocationPanel" type="Panel" parent="MainUI/GameArea/Panels"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MainUI/GameArea/Panels/LocationPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="LocationTitle" type="Label" parent="MainUI/GameArea/Panels/LocationPanel/VBoxContainer"]
+layout_mode = 2
+text = "Current Location: Terra Prime"
+
+[node name="LocationDescription" type="Label" parent="MainUI/GameArea/Panels/LocationPanel/VBoxContainer"]
+layout_mode = 2
+text = "Agricultural world known for its fertile lands and food production."
+autowrap_mode = 2
+
+[node name="MarketPanel" type="Panel" parent="MainUI/GameArea/Panels"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MainUI/GameArea/Panels/MarketPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MarketTitle" type="Label" parent="MainUI/GameArea/Panels/MarketPanel/VBoxContainer"]
+layout_mode = 2
+text = "Market"
+
+[node name="MarketContainer" type="VBoxContainer" parent="MainUI/GameArea/Panels/MarketPanel/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="TravelPanel" type="Panel" parent="MainUI/GameArea/Panels"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MainUI/GameArea/Panels/TravelPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TravelTitle" type="Label" parent="MainUI/GameArea/Panels/TravelPanel/VBoxContainer"]
+layout_mode = 2
+text = "Travel"
+
+[node name="TravelContainer" type="VBoxContainer" parent="MainUI/GameArea/Panels/TravelPanel/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
