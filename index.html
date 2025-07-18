@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Transport Tycoon</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="game-container">
+        <header class="game-header">
+            <h1>Space Transport Tycoon</h1>
+            <div class="player-stats">
+                <span>Credits: $<span id="credits">10000</span></span>
+                <span>Fuel: <span id="fuel">100</span></span>
+                <span>Cargo: <span id="cargo-used">0</span>/<span id="cargo-capacity">50</span></span>
+            </div>
+        </header>
+
+        <main class="game-main">
+            <div class="galaxy-map">
+                <h2>Galaxy Map</h2>
+                <div class="map-container">
+                    <div class="planet" id="planet-terra" data-planet="terra">
+                        <div class="planet-icon terra"></div>
+                        <span class="planet-name">Terra Prime</span>
+                        <span class="planet-info">Agricultural World</span>
+                    </div>
+                    
+                    <div class="planet" id="planet-minerva" data-planet="minerva">
+                        <div class="planet-icon minerva"></div>
+                        <span class="planet-name">Minerva Station</span>
+                        <span class="planet-info">Mining Colony</span>
+                    </div>
+                    
+                    <div class="planet" id="planet-luxuria" data-planet="luxuria">
+                        <div class="planet-icon luxuria"></div>
+                        <span class="planet-name">Luxuria Resort</span>
+                        <span class="planet-info">Tourist Hub</span>
+                    </div>
+                    
+                    <div class="ship" id="player-ship">
+                        <div class="ship-icon"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-panels">
+                <div class="panel" id="location-panel">
+                    <h3>Current Location: <span id="current-location">Terra Prime</span></h3>
+                    <div id="location-details">
+                        <p>Welcome to Terra Prime, the agricultural heart of the galaxy!</p>
+                    </div>
+                </div>
+
+                <div class="panel" id="market-panel">
+                    <h3>Market</h3>
+                    <div id="market-goods">
+                        <!-- Market items will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <div class="panel" id="travel-panel">
+                    <h3>Travel</h3>
+                    <div id="travel-options">
+                        <!-- Travel destinations will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
