@@ -10,7 +10,7 @@
 
 ## Core Concept
 
-Space Transport Tycoon is a strategy game where players build and manage a space transport empire. Starting with a single spaceship and limited funds, players expand their operations by transporting goods and passengers across a dynamic galaxy, outmaneuvering competitors, and overcoming space hazards.
+Space Transport Tycoon is a real time strategy game where players build and manage a space transport empire. Starting with a single spaceship and limited funds, players expand their operations by transporting goods and passengers across a dynamic galaxy, outmaneuvering competitors, and overcoming space hazards. 
 
 ## Current Implementation Status
 
@@ -95,23 +95,10 @@ SpaceTycoon/
 - **Minerva → Terra Minerals**: ~67% profit margin (solid return)
 - **Luxuria Passenger Transport**: High-value but limited volume
 
-## Technical Considerations
-
-### Current Technology Stack of Prototype
-- **Frontend**: Vanilla HTML5, CSS3, JavaScript (ES6+)
-- **Styling**: CSS Grid, Flexbox, CSS animations
-- **State Management**: Object-based game state
-- **No Dependencies**: Pure web technologies for maximum compatibility
-
-### Performance Notes
-- **Lightweight**: ~15KB total file size
-- **Responsive**: Mobile-friendly design patterns
-- **Browser Compatibility**: Modern browsers (ES6+ support required)
-
 ## Next Development Priorities
 
-1. **Ship Upgrade System**: Allow players to improve their vessel
-2. **Fleet Expansion**: Multiple ships with different specializations
+1. **Ship Upgrade System**: Module ship design with customization and upgrade system
+2. **Empire Expansion**: Fleet management, ship crew system
 3. **Event System**: Random encounters and market changes
 4. **Save/Load**: Persistent game state
 5. **Tutorial System**: Guided introduction for new players
