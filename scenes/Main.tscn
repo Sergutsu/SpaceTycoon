@@ -203,3 +203,86 @@ size_flags_vertical = 3
 [node name="UpgradeContainer" type="VBoxContainer" parent="MainUI/GameArea/Panels/UpgradePanel/VBoxContainer/ScrollContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
+
+[node name="ArtifactPanel" type="Panel" parent="MainUI/GameArea/Panels"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MainUI/GameArea/Panels/ArtifactPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ArtifactTitle" type="Label" parent="MainUI/GameArea/Panels/ArtifactPanel/VBoxContainer"]
+layout_mode = 2
+text = "Artifacts & Lore"
+
+[node name="TabContainer" type="TabContainer" parent="MainUI/GameArea/Panels/ArtifactPanel/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Artifacts" type="ScrollContainer" parent="MainUI/GameArea/Panels/ArtifactPanel/VBoxContainer/TabContainer"]
+layout_mode = 2
+
+[node name="ArtifactContainer" type="VBoxContainer" parent="MainUI/GameArea/Panels/ArtifactPanel/VBoxContainer/TabContainer/Artifacts"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Lore" type="ScrollContainer" parent="MainUI/GameArea/Panels/ArtifactPanel/VBoxContainer/TabContainer"]
+layout_mode = 2
+
+[node name="LoreContainer" type="VBoxContainer" parent="MainUI/GameArea/Panels/ArtifactPanel/VBoxContainer/TabContainer/Lore"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ArtifactNotification" type="AcceptDialog" parent="MainUI"]
+title = "Artifact Discovered!"
+initial_position = 1
+size = Vector2i(400, 300)
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MainUI/ArtifactNotification"]
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 392.0
+offset_bottom = 251.0
+
+[node name="ArtifactName" type="Label" parent="MainUI/ArtifactNotification/VBoxContainer"]
+layout_mode = 2
+text = "Artifact Name"
+horizontal_alignment = 1
+
+[node name="ArtifactDescription" type="Label" parent="MainUI/ArtifactNotification/VBoxContainer"]
+layout_mode = 2
+text = "Artifact description goes here..."
+autowrap_mode = 2
+
+[node name="HSeparator" type="HSeparator" parent="MainUI/ArtifactNotification/VBoxContainer"]
+layout_mode = 2
+
+[node name="LoreTitle" type="Label" parent="MainUI/ArtifactNotification/VBoxContainer"]
+layout_mode = 2
+text = "Precursor Lore Fragment:"
+
+[node name="LoreText" type="Label" parent="MainUI/ArtifactNotification/VBoxContainer"]
+layout_mode = 2
+text = "Lore fragment goes here..."
+autowrap_mode = 2
+
+[node name="HSeparator2" type="HSeparator" parent="MainUI/ArtifactNotification/VBoxContainer"]
+layout_mode = 2
+
+[node name="EffectsTitle" type="Label" parent="MainUI/ArtifactNotification/VBoxContainer"]
+layout_mode = 2
+text = "Artifact Effects:"
+
+[node name="EffectsText" type="Label" parent="MainUI/ArtifactNotification/VBoxContainer"]
+layout_mode = 2
+text = "Effects go here..."
+autowrap_mode = 2

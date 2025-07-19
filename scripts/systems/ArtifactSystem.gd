@@ -105,6 +105,10 @@ func collect_artifact(artifact_id: String) -> Dictionary:
 	if artifact.is_empty():
 		return {"success": false, "error": "Artifact not found"}
 	
+	# Check if artifact is already collected
+	if collected_artifacts.has(artifact_id):
+		return {"success": false, "error": "Artifact already collected"}
+	
 	# Add to collected artifacts
 	collected_artifacts.append(artifact_id)
 	
@@ -228,6 +232,29 @@ func _apply_artifact_effects(artifact: Dictionary) -> Dictionary:
 			effects["wormhole_access"] = true
 	
 	return effects
+
+func restore_artifact_effects(artifact_ids: Array):
+	# Restore artifacts without duplicating them in collected_artifacts
+	# This is used when loading saved game data
+	collected_artifacts.clear()
+	active_bonuses = {
+		"travel_speed_bonus": 0.0,
+		"fuel_efficiency_bonus": 0.0,
+		"trade_bonus": 0.0,
+		"global_efficiency": 0.0,
+		"detection_bonus": 0.0
+	}
+	
+	for artifact_id in artifact_ids:
+		var artifact = _find_artifact_by_id(artifact_id)
+		if not artifact.is_empty():
+			collected_artifacts.append(artifact_id)
+			_apply_artifact_effects(artifact)
+			
+			# Update precursor lore discovery status
+			var civilization = _get_artifact_civilization(artifact_id)
+			if not precursor_civilizations[civilization]["discovered"]:
+				precursor_civilizations[civilization]["discovered"] = true
 
 func _count_artifacts_from_civilization(civ_id: String) -> int:
 	var count = 0

@@ -51,20 +51,30 @@
   - Add immediate stat updates and visual feedback after purchases
   - _Requirements: 2.6, 2.7, 2.8_
 
-- [ ] 4. Implement artifact discovery system
-- [ ] 4.1 Create precursor civilization and artifact data structures
+- [x] 4. Implement artifact discovery system
+
+
+
+
+- [x] 4.1 Create precursor civilization and artifact data structures
+
+
   - Define 3 precursor races (Chronovores, Silica Gardens, Void Weavers) with lore
   - Implement artifact definitions with rarity, effects, and descriptions
   - Create discovery chance calculations based on scanner level and system type
   - _Requirements: 3.1, 3.2, 3.7_
 
-- [ ] 4.2 Implement artifact discovery mechanics and effects
+- [x] 4.2 Implement artifact discovery mechanics and effects
+
+
   - Add discovery attempt logic during system visits
   - Create artifact effect application system for ship bonuses
   - Implement artifact collection tracking and statistics
   - _Requirements: 3.3, 3.4, 3.6_
 
-- [ ] 4.3 Build artifact discovery UI and lore system
+- [x] 4.3 Build artifact discovery UI and lore system
+
+
   - Create discovery notification system with artifact details
   - Build artifact collection viewer showing discovered artifacts and effects
   - Implement precursor civilization lore progression tracking

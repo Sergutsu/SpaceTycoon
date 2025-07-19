@@ -11,6 +11,14 @@ class_name MainUI
 @onready var travel_container: VBoxContainer = $GameArea/Panels/TravelPanel/VBoxContainer/TravelContainer
 @onready var upgrade_panel: Panel = $GameArea/Panels/UpgradePanel
 @onready var upgrade_container: VBoxContainer = $GameArea/Panels/UpgradePanel/VBoxContainer/ScrollContainer/UpgradeContainer
+@onready var artifact_panel: Panel = $GameArea/Panels/ArtifactPanel
+@onready var artifact_container: VBoxContainer = $GameArea/Panels/ArtifactPanel/VBoxContainer/TabContainer/Artifacts/ArtifactContainer
+@onready var lore_container: VBoxContainer = $GameArea/Panels/ArtifactPanel/VBoxContainer/TabContainer/Lore/LoreContainer
+@onready var artifact_notification: AcceptDialog = $ArtifactNotification
+@onready var artifact_name_label: Label = $ArtifactNotification/VBoxContainer/ArtifactName
+@onready var artifact_description_label: Label = $ArtifactNotification/VBoxContainer/ArtifactDescription
+@onready var lore_text_label: Label = $ArtifactNotification/VBoxContainer/LoreText
+@onready var effects_text_label: Label = $ArtifactNotification/VBoxContainer/EffectsText
 
 # Game Manager reference
 var game_manager: GameManager
@@ -26,21 +34,48 @@ func _ready():
 	game_manager.location_changed.connect(_on_location_changed)
 	game_manager.ship_stats_updated.connect(_on_ship_stats_updated)
 	
+	# Connect artifact system signals
+	game_manager.artifact_system.artifact_discovered.connect(_on_artifact_discovered)
+	game_manager.artifact_system.artifact_collected.connect(_on_artifact_collected)
+	game_manager.artifact_system.precursor_lore_unlocked.connect(_on_precursor_lore_unlocked)
+	
 	# Initial UI update
 	_update_location_display()
 	_update_market_display()
 	_update_travel_display()
 	_update_upgrade_display()
+	_update_artifact_display()
 
 func _on_credits_changed(new_credits: int):
-	credits_label.text = "Credits: $" + str(new_credits)
+	var credits_text = "Credits: $" + str(new_credits)
+	
+	# Add artifact bonus indicator if applicable
+	var bonuses = game_manager.get_active_artifact_bonuses()
+	if bonuses.get("trade_bonus", 0.0) > 0:
+		credits_text += " ⚡"
+	
+	credits_label.text = credits_text
 
 func _on_fuel_changed(new_fuel: int):
-	fuel_label.text = "Fuel: " + str(new_fuel)
+	var fuel_text = "Fuel: " + str(new_fuel)
+	
+	# Add artifact bonus indicator if applicable
+	var bonuses = game_manager.get_active_artifact_bonuses()
+	if bonuses.get("fuel_efficiency_bonus", 0.0) > 0:
+		fuel_text += " ⚡"
+	
+	fuel_label.text = fuel_text
 
 func _on_cargo_changed(_cargo_dict: Dictionary):
 	var total_cargo = game_manager.get_total_cargo()
-	cargo_label.text = "Cargo: " + str(total_cargo) + "/" + str(game_manager.player_data.ship.cargo_capacity)
+	var cargo_text = "Cargo: " + str(total_cargo) + "/" + str(game_manager.player_data.ship.cargo_capacity)
+	
+	# Add artifact bonus indicator if applicable
+	var bonuses = game_manager.get_active_artifact_bonuses()
+	if bonuses.get("global_efficiency", 0.0) > 0:
+		cargo_text += " ⚡"
+	
+	cargo_label.text = cargo_text
 	_update_market_display()
 
 func _on_location_changed(_planet_id: String):
@@ -51,6 +86,7 @@ func _on_location_changed(_planet_id: String):
 
 func _on_ship_stats_updated(_stats: Dictionary):
 	_update_upgrade_display()
+	_update_ship_stats_display()
 
 func _update_location_display():
 	var system = game_manager.get_current_system()
@@ -356,3 +392,207 @@ func _on_upgrade_pressed(upgrade_type: String):
 	else:
 		# Could show error message to player
 		print("Upgrade failed: " + result["error"])
+
+# Artifact system signal handlers
+func _on_artifact_discovered(artifact_id: String, system_id: String, lore_fragment: String):
+	# Show artifact discovery notification
+	_show_artifact_discovery_notification(artifact_id, lore_fragment)
+
+func _on_artifact_collected(artifact_id: String, effects: Dictionary):
+	# Update artifact display
+	_update_artifact_display()
+
+func _on_precursor_lore_unlocked(civilization: String, lore_text: String):
+	# Update lore display
+	_update_artifact_display()
+
+# Artifact UI functions
+func _show_artifact_discovery_notification(artifact_id: String, lore_fragment: String):
+	var artifact_data = game_manager.artifact_system._find_artifact_by_id(artifact_id)
+	
+	if artifact_data.is_empty():
+		return
+	
+	# Set notification content
+	artifact_name_label.text = artifact_data["name"]
+	artifact_description_label.text = artifact_data["description"]
+	lore_text_label.text = lore_fragment
+	
+	# Format effects text
+	var effects_text = ""
+	match artifact_data["effect_type"]:
+		"travel_speed":
+			effects_text = "Increases travel speed by " + str(int(artifact_data["magnitude"] * 100)) + "%"
+		"fuel_efficiency":
+			effects_text = "Reduces fuel consumption by " + str(int(artifact_data["magnitude"] * 100)) + "%"
+		"market_bonus":
+			effects_text = "Increases trade profits by " + str(int(artifact_data["magnitude"] * 100)) + "%"
+		"global_efficiency":
+			effects_text = "Improves all ship operations by " + str(int(artifact_data["magnitude"] * 100)) + "%"
+		"new_routes":
+			effects_text = "Reveals hidden hyperspace routes"
+		"wormhole_access":
+			effects_text = "Enables instant travel capabilities"
+		_:
+			effects_text = "Provides unknown benefits"
+	
+	effects_text_label.text = effects_text
+	
+	# Show notification
+	artifact_notification.popup_centered()
+
+func _update_artifact_display():
+	# Clear existing artifact items
+	for child in artifact_container.get_children():
+		child.queue_free()
+	
+	# Clear existing lore items
+	for child in lore_container.get_children():
+		child.queue_free()
+	
+	# Update artifacts tab
+	var collected_artifacts = game_manager.get_collected_artifacts()
+	
+	if collected_artifacts.is_empty():
+		var no_artifacts_label = Label.new()
+		no_artifacts_label.text = "No artifacts discovered yet.\nExplore systems with a scanner to find ancient relics!"
+		no_artifacts_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		no_artifacts_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		artifact_container.add_child(no_artifacts_label)
+	else:
+		for artifact in collected_artifacts:
+			var artifact_item = _create_artifact_item(artifact)
+			artifact_container.add_child(artifact_item)
+	
+	# Update lore tab
+	var precursor_lore = game_manager.get_precursor_lore()
+	
+	for civ_id in precursor_lore.keys():
+		var civ_data = precursor_lore[civ_id]
+		var lore_item = _create_lore_item(civ_data)
+		lore_container.add_child(lore_item)
+
+func _create_artifact_item(artifact: Dictionary) -> Control:
+	var container = VBoxContainer.new()
+	container.add_theme_constant_override("separation", 8)
+	
+	# Artifact header
+	var header_container = HBoxContainer.new()
+	
+	var name_label = Label.new()
+	name_label.text = artifact["name"]
+	name_label.add_theme_font_size_override("font_size", 14)
+	
+	var rarity_label = Label.new()
+	rarity_label.text = "[" + artifact["rarity"].capitalize() + "]"
+	rarity_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	rarity_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	rarity_label.add_theme_font_size_override("font_size", 12)
+	
+	# Color code rarity
+	match artifact["rarity"]:
+		"common":
+			rarity_label.modulate = Color.WHITE
+		"rare":
+			rarity_label.modulate = Color.GOLD
+		"legendary":
+			rarity_label.modulate = Color.PURPLE
+	
+	header_container.add_child(name_label)
+	header_container.add_child(rarity_label)
+	
+	# Description
+	var description_label = Label.new()
+	description_label.text = artifact["description"]
+	description_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	description_label.add_theme_font_size_override("font_size", 11)
+	
+	# Lore fragment
+	var lore_label = Label.new()
+	lore_label.text = "\"" + artifact["lore"] + "\""
+	lore_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	lore_label.add_theme_font_size_override("font_size", 10)
+	lore_label.modulate = Color(0.8, 0.8, 1.0)
+	
+	# Effects
+	var effects_label = Label.new()
+	var effects_text = _format_artifact_effect(artifact["effect_type"], artifact["magnitude"])
+	effects_label.text = "Effect: " + effects_text
+	effects_label.add_theme_font_size_override("font_size", 11)
+	effects_label.modulate = Color.GREEN
+	
+	# Add components
+	container.add_child(header_container)
+	container.add_child(description_label)
+	container.add_child(lore_label)
+	container.add_child(effects_label)
+	
+	# Add separator
+	var separator = HSeparator.new()
+	container.add_child(separator)
+	
+	return container
+
+func _create_lore_item(civ_data: Dictionary) -> Control:
+	var container = VBoxContainer.new()
+	container.add_theme_constant_override("separation", 8)
+	
+	# Civilization header
+	var header_container = HBoxContainer.new()
+	
+	var name_label = Label.new()
+	name_label.text = civ_data["name"]
+	name_label.add_theme_font_size_override("font_size", 14)
+	
+	var artifacts_count_label = Label.new()
+	artifacts_count_label.text = "Artifacts Found: " + str(civ_data["artifacts_found"])
+	artifacts_count_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	artifacts_count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	artifacts_count_label.add_theme_font_size_override("font_size", 11)
+	
+	header_container.add_child(name_label)
+	header_container.add_child(artifacts_count_label)
+	
+	# Lore content
+	var lore_label = Label.new()
+	if civ_data["discovered"]:
+		lore_label.text = civ_data["lore"]
+		lore_label.modulate = Color.WHITE
+	else:
+		lore_label.text = "Discover artifacts from this civilization to unlock their lore..."
+		lore_label.modulate = Color(0.6, 0.6, 0.6)
+	
+	lore_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	lore_label.add_theme_font_size_override("font_size", 11)
+	
+	# Add components
+	container.add_child(header_container)
+	container.add_child(lore_label)
+	
+	# Add separator
+	var separator = HSeparator.new()
+	container.add_child(separator)
+	
+	return container
+
+func _format_artifact_effect(effect_type: String, magnitude: float) -> String:
+	match effect_type:
+		"travel_speed":
+			return "Travel speed +" + str(int(magnitude * 100)) + "%"
+		"fuel_efficiency":
+			return "Fuel efficiency +" + str(int(magnitude * 100)) + "%"
+		"market_bonus":
+			return "Trade profits +" + str(int(magnitude * 100)) + "%"
+		"global_efficiency":
+			return "All operations +" + str(int(magnitude * 100)) + "%"
+		"new_routes":
+			return "Reveals hidden routes"
+		"wormhole_access":
+			return "Instant travel capability"
+		_:
+			return "Unknown effect"
+
+func _update_ship_stats_display():
+	# This function updates visual indicators for artifact bonuses
+	# The actual stat updates are handled by the signal handlers above
+	pass

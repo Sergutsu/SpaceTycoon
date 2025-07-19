@@ -94,6 +94,9 @@ func _ready():
 	player_data.created_at = Time.get_unix_time_from_system()
 	player_data.last_played = Time.get_unix_time_from_system()
 	
+	# Initialize artifacts if any are already collected
+	_initialize_collected_artifacts()
+	
 	# Emit initial state signals
 	credits_changed.emit(player_data.credits)
 	fuel_changed.emit(player_data.ship.current_fuel)
@@ -154,6 +157,10 @@ func buy_good(good_type: String, quantity: int = 1) -> Dictionary:
 	var price = economy_system.calculate_dynamic_price(current_system, good_type)
 	var total_cost = price * quantity
 	
+	# Apply artifact trade bonus to buying (as a discount)
+	var trade_bonus = player_data.ship.bonuses.get("trade_bonus", 0.0)
+	total_cost = int(total_cost * (1.0 - trade_bonus * 0.5))  # Half bonus for buying
+	
 	# Check if player can afford and has cargo space
 	if player_data.credits < total_cost:
 		return {"success": false, "error": "Insufficient credits"}
@@ -190,6 +197,10 @@ func sell_good(good_type: String, quantity: int = 1) -> Dictionary:
 	var current_system = player_data.current_system
 	var price = economy_system.calculate_dynamic_price(current_system, good_type)
 	var total_revenue = price * quantity
+	
+	# Apply artifact trade bonus to selling
+	var trade_bonus = player_data.ship.bonuses.get("trade_bonus", 0.0)
+	total_revenue = int(total_revenue * (1.0 + trade_bonus))
 	
 	# Execute trade
 	player_data.credits += total_revenue
@@ -296,6 +307,18 @@ func get_available_destinations() -> Array:
 func _get_current_ship_stats() -> Dictionary:
 	return ship_system.get_ship_stats(player_data.ship)
 
+# Get collected artifacts data
+func get_collected_artifacts() -> Array:
+	return artifact_system.get_collected_artifacts()
+
+# Get precursor lore data
+func get_precursor_lore() -> Dictionary:
+	return artifact_system.get_precursor_lore()
+
+# Get active artifact bonuses
+func get_active_artifact_bonuses() -> Dictionary:
+	return artifact_system.get_active_bonuses()
+
 # Purchase ship upgrade
 func purchase_ship_upgrade(upgrade_type: String) -> Dictionary:
 	var current_level = player_data.ship.upgrades[upgrade_type]
@@ -324,12 +347,29 @@ func _attempt_artifact_discovery(system_id: String):
 			_apply_artifact_bonuses()
 
 # Apply artifact bonuses to ship stats
+# Initialize collected artifacts on game start
+func _initialize_collected_artifacts():
+	# Restore all artifacts and their effects
+	if player_data.artifacts.size() > 0:
+		artifact_system.restore_artifact_effects(player_data.artifacts)
+		_apply_artifact_bonuses()
+
+# Apply artifact bonuses to ship stats
 func _apply_artifact_bonuses():
 	var bonuses = artifact_system.get_active_bonuses()
 	
 	# Apply bonuses to ship stats
 	player_data.ship.bonuses.fuel_efficiency = 1.0 - bonuses.get("fuel_efficiency_bonus", 0.0)
 	player_data.ship.bonuses.travel_speed = 1.0 + bonuses.get("travel_speed_bonus", 0.0)
+	
+	# Store other bonuses for use in trading and other systems
+	if not player_data.ship.bonuses.has("trade_bonus"):
+		player_data.ship.bonuses["trade_bonus"] = 0.0
+	if not player_data.ship.bonuses.has("global_efficiency"):
+		player_data.ship.bonuses["global_efficiency"] = 0.0
+	
+	player_data.ship.bonuses.trade_bonus = bonuses.get("trade_bonus", 0.0)
+	player_data.ship.bonuses.global_efficiency = bonuses.get("global_efficiency", 0.0)
 	
 	ship_stats_updated.emit(_get_current_ship_stats())
 
