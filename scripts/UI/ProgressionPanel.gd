@@ -404,7 +404,7 @@ func _format_achievement_reward(reward_type: String, reward_value) -> String:
 
 func _format_time(seconds: float) -> String:
 	var hours = int(seconds / 3600)
-	var minutes = int((seconds % 3600) / 60)
+	var minutes = int((int(seconds) % 3600) / 60)
 	
 	if hours > 0:
 		return str(hours) + "h " + str(minutes) + "m"

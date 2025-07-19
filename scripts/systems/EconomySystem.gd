@@ -27,9 +27,9 @@ var star_systems: Dictionary = {
 		"special_features": ["stable_prices", "food_surplus"],
 		"position": Vector2(100, 200),
 		"goods": {
-			"food": {"base_price": 8, "volatility": 0.1},
-			"minerals": {"base_price": 55, "volatility": 0.2},
-			"tech": {"base_price": 30, "volatility": 0.15}
+			"food": {"base_price": 12, "volatility": 0.08},
+			"minerals": {"base_price": 48, "volatility": 0.18},
+			"tech": {"base_price": 35, "volatility": 0.12}
 		},
 		"travel_costs": {
 			"minerva_station": 15,
@@ -45,9 +45,9 @@ var star_systems: Dictionary = {
 		"special_features": ["bulk_discounts", "mineral_surplus"],
 		"position": Vector2(300, 150),
 		"goods": {
-			"food": {"base_price": 25, "volatility": 0.2},
-			"minerals": {"base_price": 12, "volatility": 0.1},
-			"tech": {"base_price": 35, "volatility": 0.15}
+			"food": {"base_price": 28, "volatility": 0.16},
+			"minerals": {"base_price": 15, "volatility": 0.08},
+			"tech": {"base_price": 32, "volatility": 0.14}
 		},
 		"travel_costs": {
 			"terra_prime": 15,
@@ -63,9 +63,9 @@ var star_systems: Dictionary = {
 		"special_features": ["premium_passengers", "luxury_goods"],
 		"position": Vector2(200, 350),
 		"goods": {
-			"food": {"base_price": 18, "volatility": 0.15},
-			"minerals": {"base_price": 40, "volatility": 0.2},
-			"passengers": {"base_price": 60, "volatility": 0.3}
+			"food": {"base_price": 22, "volatility": 0.18},
+			"minerals": {"base_price": 38, "volatility": 0.22},
+			"passengers": {"base_price": 65, "volatility": 0.25}
 		},
 		"travel_costs": {
 			"terra_prime": 20,
@@ -81,9 +81,9 @@ var star_systems: Dictionary = {
 		"special_features": ["volatile_prices", "rare_goods"],
 		"position": Vector2(450, 300),
 		"goods": {
-			"food": {"base_price": 45, "volatility": 0.4},
-			"minerals": {"base_price": 8, "volatility": 0.3},
-			"artifacts": {"base_price": 200, "volatility": 0.5}
+			"food": {"base_price": 42, "volatility": 0.35},
+			"minerals": {"base_price": 10, "volatility": 0.28},
+			"artifacts": {"base_price": 180, "volatility": 0.45}
 		},
 		"travel_costs": {
 			"terra_prime": 35,
@@ -99,9 +99,9 @@ var star_systems: Dictionary = {
 		"special_features": ["upgrade_shop", "trade_hub"],
 		"position": Vector2(250, 200),
 		"goods": {
-			"food": {"base_price": 15, "volatility": 0.12},
-			"minerals": {"base_price": 25, "volatility": 0.12},
-			"ship_parts": {"base_price": 100, "volatility": 0.1}
+			"food": {"base_price": 18, "volatility": 0.10},
+			"minerals": {"base_price": 28, "volatility": 0.10},
+			"ship_parts": {"base_price": 95, "volatility": 0.08}
 		},
 		"travel_costs": {
 			"terra_prime": 25,

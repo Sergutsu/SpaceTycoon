@@ -19,11 +19,11 @@ var trade_interval: float = 30.0  # Execute trades every 30 seconds
 
 # Trading post configuration template
 var trading_post_template: Dictionary = {
-	"cost": 50000,
-	"efficiency": 0.7,  # 70% of manual trading profit
-	"cargo_allocation": 20,
-	"auto_buy_threshold": 0.8,  # Buy when price < 80% of average
-	"auto_sell_threshold": 1.2,  # Sell when price > 120% of average
+	"cost": 35000,
+	"efficiency": 0.65,  # 65% of manual trading profit
+	"cargo_allocation": 25,
+	"auto_buy_threshold": 0.85,  # Buy when price < 85% of average
+	"auto_sell_threshold": 1.15,  # Sell when price > 115% of average
 	"target_goods": ["food", "minerals"],
 	"active": true,
 	"profit_generated": 0,
@@ -285,7 +285,7 @@ func _attempt_automated_trade(system_id: String, good_type: String, post: Dictio
 
 func _calculate_efficiency_from_ai_level(ai_level: int) -> float:
 	# Efficiency increases with AI Core level (Requirement 5.7)
-	var efficiency_levels = [0.0, 0.7, 0.8, 0.9, 0.95, 1.0]
+	var efficiency_levels = [0.0, 0.65, 0.72, 0.80, 0.87, 0.92]
 	return efficiency_levels[clamp(ai_level, 0, efficiency_levels.size() - 1)]
 
 # Additional functions for trading post management

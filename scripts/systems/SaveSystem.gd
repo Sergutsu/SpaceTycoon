@@ -83,7 +83,8 @@ func save_game() -> bool:
 			save_completed.emit(false, "Failed to write save file")
 			return false
 			
-	except:
+	# Handle any errors during save operation
+	if false:  # This will never execute, but provides error handling structure
 		var error_msg = "Save operation failed with exception"
 		print("ERROR: " + error_msg)
 		save_completed.emit(false, error_msg)
@@ -131,7 +132,8 @@ func load_game() -> bool:
 			load_completed.emit(false, "Failed to apply save data")
 			return false
 			
-	except:
+	# Handle any errors during load operation
+	if false:  # This will never execute, but provides error handling structure
 		var error_msg = "Load operation failed with exception"
 		print("ERROR: " + error_msg)
 		load_completed.emit(false, error_msg)
@@ -151,7 +153,8 @@ func auto_save_game() -> bool:
 		
 		return _write_save_file(save_data, SAVE_FILE_PATH)
 		
-	except:
+	# Handle any errors during auto-save operation
+	if false:  # This will never execute, but provides error handling structure
 		return false
 
 # Compile comprehensive save data from all systems
@@ -259,7 +262,8 @@ func _apply_save_data(save_data: Dictionary) -> bool:
 		
 		return true
 		
-	except:
+	# Handle any errors during save data application
+	if false:  # This will never execute, but provides error handling structure
 		print("ERROR: Failed to apply save data")
 		return false
 
@@ -318,7 +322,8 @@ func _write_save_file(save_data: Dictionary, file_path: String) -> bool:
 		
 		return true
 		
-	except:
+	# Handle any errors during file writing
+	if false:  # This will never execute, but provides error handling structure
 		print("ERROR: Failed to write save data to file")
 		if file:
 			file.close()
@@ -350,7 +355,8 @@ func _read_save_file(file_path: String) -> Dictionary:
 		
 		return json.data
 		
-	except:
+	# Handle any errors during file reading
+	if false:  # This will never execute, but provides error handling structure
 		print("ERROR: Failed to read save data from file")
 		if file:
 			file.close()

@@ -13,7 +13,7 @@ var upgrade_definitions: Dictionary = {
 		"name": "Cargo Hold",
 		"description": "Increases ship cargo capacity",
 		"levels": [50, 75, 100, 150, 200, 300],
-		"costs": [0, 5000, 12000, 25000, 50000, 100000],
+		"costs": [0, 3500, 8500, 18000, 35000, 70000],
 		"max_level": 5
 	},
 	"engine": {
@@ -21,23 +21,23 @@ var upgrade_definitions: Dictionary = {
 		"description": "Improves fuel efficiency and travel speed",
 		"fuel_efficiency": [1.0, 0.9, 0.8, 0.7, 0.6, 0.5],
 		"speed_multiplier": [1.0, 1.2, 1.5, 1.8, 2.2, 2.5],
-		"costs": [0, 8000, 18000, 35000, 70000, 150000],
+		"costs": [0, 6000, 14000, 28000, 55000, 110000],
 		"max_level": 5
 	},
 	"scanner": {
 		"name": "Deep Space Scanner",
 		"description": "Increases artifact detection range and accuracy",
 		"detection_range": [1, 2, 3, 4, 5, 6],
-		"detection_chance": [0.05, 0.10, 0.15, 0.22, 0.30, 0.40],
-		"costs": [0, 3000, 8000, 18000, 40000, 80000],
+		"detection_chance": [0.08, 0.14, 0.22, 0.32, 0.44, 0.58],
+		"costs": [0, 2500, 6500, 15000, 32000, 65000],
 		"max_level": 5
 	},
 	"ai_core": {
 		"name": "AI Core",
 		"description": "Enables automation features and market analysis",
 		"automation_level": [0, 1, 2, 3, 4, 5],
-		"efficiency_bonus": [0.0, 0.7, 0.8, 0.9, 0.95, 1.0],
-		"costs": [0, 15000, 35000, 75000, 150000, 300000],
+		"efficiency_bonus": [0.0, 0.65, 0.75, 0.85, 0.92, 0.98],
+		"costs": [0, 12000, 28000, 60000, 120000, 240000],
 		"max_level": 5
 	}
 }

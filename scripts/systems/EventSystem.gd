@@ -16,11 +16,11 @@ var event_definitions: Dictionary = {
 	"solar_flare": {
 		"name": "Solar Flare",
 		"description": "Intense solar radiation disrupts navigation and scanning systems across the galaxy",
-		"probability": 0.15,
-		"duration_range": [180, 300],  # 3-5 minutes
+		"probability": 0.12,
+		"duration_range": [120, 240],  # 2-4 minutes
 		"effects": {
-			"fuel_cost_multiplier": 1.5,
-			"scanner_efficiency": 0.5
+			"fuel_cost_multiplier": 1.3,
+			"scanner_efficiency": 0.7
 		},
 		"affected_systems": ["all"],
 		"severity": "moderate",
@@ -29,11 +29,11 @@ var event_definitions: Dictionary = {
 	"trade_boom": {
 		"name": "Trade Boom",
 		"description": "Economic prosperity creates increased demand and volatile pricing opportunities",
-		"probability": 0.20,
-		"duration_range": [240, 480],  # 4-8 minutes
+		"probability": 0.16,
+		"duration_range": [180, 360],  # 3-6 minutes
 		"effects": {
-			"price_volatility": 1.5,
-			"profit_multiplier": 1.3
+			"price_volatility": 1.3,
+			"profit_multiplier": 1.2
 		},
 		"affected_systems": ["nexus_station", "luxuria_resort", "terra_prime"],
 		"severity": "beneficial",
@@ -42,11 +42,11 @@ var event_definitions: Dictionary = {
 	"artifact_signal": {
 		"name": "Artifact Signal Detected",
 		"description": "Deep space sensors detect ancient precursor technology signatures",
-		"probability": 0.10,
-		"duration_range": [120, 180],  # 2-3 minutes
+		"probability": 0.14,
+		"duration_range": [150, 240],  # 2.5-4 minutes
 		"effects": {
-			"artifact_discovery_bonus": 2.0,
-			"scanner_efficiency": 1.2
+			"artifact_discovery_bonus": 1.8,
+			"scanner_efficiency": 1.3
 		},
 		"affected_systems": ["frontier_outpost"],
 		"severity": "beneficial",
@@ -56,12 +56,12 @@ var event_definitions: Dictionary = {
 	"pirate_activity": {
 		"name": "Pirate Activity",
 		"description": "Increased pirate presence in outer systems threatens cargo shipments",
-		"probability": 0.12,
-		"duration_range": [300, 600],  # 5-10 minutes
+		"probability": 0.08,
+		"duration_range": [240, 420],  # 4-7 minutes
 		"effects": {
-			"cargo_loss_risk": 0.15,
-			"travel_danger": 1.5,
-			"fuel_cost_multiplier": 1.2
+			"cargo_loss_risk": 0.10,
+			"travel_danger": 1.3,
+			"fuel_cost_multiplier": 1.15
 		},
 		"affected_systems": ["frontier_outpost"],
 		"severity": "dangerous",

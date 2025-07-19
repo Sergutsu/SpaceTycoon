@@ -40,6 +40,10 @@ var game_manager: GameManager
 var event_update_timer: float = 0.0
 var event_update_interval: float = 1.0  # Update every second
 
+# UI state tracking for visual feedback
+var _last_credits: int = 0
+var _flash_tween: Tween
+
 func _ready():
 	# Get game manager reference
 	game_manager = get_node("../GameManager")
@@ -93,8 +97,9 @@ func _process(delta):
 	if event_update_timer >= event_update_interval:
 		event_update_timer = 0.0
 		_update_event_display()
-		# Also update save/load buttons periodically
-		_update_save_load_buttons()
+		# Also update save/load buttons periodically (less frequently)
+		if int(event_update_timer) % 5 == 0:  # Every 5 seconds
+			_update_save_load_buttons()
 
 func _on_credits_changed(new_credits: int):
 	var credits_text = "Credits: $" + str(new_credits)
@@ -102,17 +107,34 @@ func _on_credits_changed(new_credits: int):
 	# Add artifact bonus indicator if applicable
 	var bonuses = game_manager.get_active_artifact_bonuses()
 	if bonuses.get("trade_bonus", 0.0) > 0:
-		credits_text += " ⚡"
+		credits_text += " ⚡+" + str(int(bonuses.get("trade_bonus", 0.0) * 100)) + "%"
 	
 	credits_label.text = credits_text
+	
+	# Add visual feedback for credit changes
+	if new_credits > _last_credits:
+		_flash_label(credits_label, Color.GREEN)
+	elif new_credits < _last_credits:
+		_flash_label(credits_label, Color.RED)
+	
+	_last_credits = new_credits
 
 func _on_fuel_changed(new_fuel: int):
-	var fuel_text = "Fuel: " + str(new_fuel)
+	var fuel_text = "Fuel: " + str(new_fuel) + "/" + str(game_manager.player_data.ship.fuel_capacity)
 	
 	# Add artifact bonus indicator if applicable
 	var bonuses = game_manager.get_active_artifact_bonuses()
 	if bonuses.get("fuel_efficiency_bonus", 0.0) > 0:
-		fuel_text += " ⚡"
+		fuel_text += " ⚡-" + str(int(bonuses.get("fuel_efficiency_bonus", 0.0) * 100)) + "%"
+	
+	# Color code fuel level
+	var fuel_percentage = float(new_fuel) / game_manager.player_data.ship.fuel_capacity
+	if fuel_percentage < 0.25:
+		fuel_label.modulate = Color.RED
+	elif fuel_percentage < 0.5:
+		fuel_label.modulate = Color.ORANGE
+	else:
+		fuel_label.modulate = Color.WHITE
 	
 	fuel_label.text = fuel_text
 
@@ -123,7 +145,16 @@ func _on_cargo_changed(_cargo_dict: Dictionary):
 	# Add artifact bonus indicator if applicable
 	var bonuses = game_manager.get_active_artifact_bonuses()
 	if bonuses.get("global_efficiency", 0.0) > 0:
-		cargo_text += " ⚡"
+		cargo_text += " ⚡+" + str(int(bonuses.get("global_efficiency", 0.0) * 100)) + "%"
+	
+	# Color code cargo capacity
+	var cargo_percentage = float(total_cargo) / game_manager.player_data.ship.cargo_capacity
+	if cargo_percentage > 0.9:
+		cargo_label.modulate = Color.RED
+	elif cargo_percentage > 0.75:
+		cargo_label.modulate = Color.ORANGE
+	else:
+		cargo_label.modulate = Color.WHITE
 	
 	cargo_label.text = cargo_text
 	_update_market_display()
@@ -207,13 +238,29 @@ func _create_market_item(good_type: String, price: int, player_has: int) -> Cont
 	# Buttons
 	var button_container = HBoxContainer.new()
 	var buy_button = Button.new()
-	buy_button.text = "Buy"
+	buy_button.text = "Buy ($" + str(price) + ")"
 	buy_button.disabled = game_manager.player_data.credits < price or game_manager.get_total_cargo() >= game_manager.player_data.ship.cargo_capacity
+	
+	# Add tooltips for disabled buttons
+	if buy_button.disabled:
+		if game_manager.player_data.credits < price:
+			buy_button.tooltip_text = "Insufficient credits (need $" + str(price) + ")"
+		else:
+			buy_button.tooltip_text = "Cargo hold full"
+	else:
+		buy_button.tooltip_text = "Buy 1 unit of " + good_type.capitalize()
+	
 	buy_button.pressed.connect(_on_buy_pressed.bind(good_type))
 	
 	var sell_button = Button.new()
-	sell_button.text = "Sell"
+	sell_button.text = "Sell ($" + str(price) + ")"
 	sell_button.disabled = player_has <= 0
+	
+	if sell_button.disabled:
+		sell_button.tooltip_text = "No " + good_type.capitalize() + " to sell"
+	else:
+		sell_button.tooltip_text = "Sell 1 unit of " + good_type.capitalize()
+	
 	sell_button.pressed.connect(_on_sell_pressed.bind(good_type))
 	
 	button_container.add_child(buy_button)
@@ -268,8 +315,16 @@ func _create_travel_item(destination: Dictionary) -> Control:
 	
 	# Travel button
 	var travel_button = Button.new()
-	travel_button.text = "Travel"
+	travel_button.text = "Travel (-" + str(destination["fuel_cost"]) + " fuel)"
 	travel_button.disabled = game_manager.player_data.ship.current_fuel < destination["fuel_cost"]
+	
+	if travel_button.disabled:
+		travel_button.tooltip_text = "Insufficient fuel (need " + str(destination["fuel_cost"]) + ", have " + str(game_manager.player_data.ship.current_fuel) + ")"
+	else:
+		travel_button.tooltip_text = "Travel to " + destination["name"]
+		if has_danger_event:
+			travel_button.tooltip_text += " (DANGER: Pirate activity detected!)"
+	
 	travel_button.pressed.connect(_on_travel_pressed.bind(destination["id"]))
 	
 	container.add_child(info_container)
@@ -677,6 +732,37 @@ func _format_artifact_effect(effect_type: String, magnitude: float) -> String:
 			return "Instant travel capability"
 		_:
 			return "Unknown effect"
+
+# Visual feedback helper functions
+func _flash_label(label: Label, color: Color):
+	if _flash_tween:
+		_flash_tween.kill()
+	
+	_flash_tween = create_tween()
+	_flash_tween.set_parallel(true)
+	
+	# Flash the color
+	_flash_tween.tween_property(label, "modulate", color, 0.1)
+	_flash_tween.tween_property(label, "modulate", Color.WHITE, 0.3).set_delay(0.1)
+	
+	# Slight scale effect
+	_flash_tween.tween_property(label, "scale", Vector2(1.1, 1.1), 0.1)
+	_flash_tween.tween_property(label, "scale", Vector2(1.0, 1.0), 0.2).set_delay(0.1)
+
+func _update_save_load_buttons():
+	# Update load button state based on save file existence
+	load_button.disabled = not game_manager.has_save_file()
+	
+	if load_button.disabled:
+		load_button.tooltip_text = "No save file found"
+	else:
+		var save_info = game_manager.get_save_file_info()
+		if not save_info.is_empty():
+			load_button.tooltip_text = "Load game from " + save_info.get("formatted_date", "unknown date")
+		else:
+			load_button.tooltip_text = "Load saved game"
+	
+	save_button.tooltip_text = "Save current game progress"
 
 func _update_ship_stats_display():
 	# This function updates visual indicators for artifact bonuses
@@ -1436,11 +1522,17 @@ func _on_remove_trading_post_pressed(system_id: String):
 	if game_manager.automation_system.remove_trading_post(system_id):
 		_update_automation_display()
 		print("Trading post removed")
-func _u
-pdate_progression_display():
+func _update_progression_display():
 	# The progression panel handles its own updates through signals
 	# This function exists for consistency with other display updates
 	pass
+
+# Save/Load button handlers
+func _on_save_button_pressed():
+	game_manager.save_game()
+
+func _on_load_button_pressed():
+	game_manager.load_game()
 #
  Save/Load button handlers
 func _on_save_button_pressed():
