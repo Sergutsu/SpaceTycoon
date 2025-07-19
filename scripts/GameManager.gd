@@ -412,10 +412,12 @@ func _apply_artifact_bonuses():
 	ship_stats_updated.emit(_get_current_ship_stats())
 
 # System signal handlers
+@warning_ignore("unused_parameter")
 func _on_market_prices_updated(system_id: String, prices: Dictionary):
 	# Market prices updated - UI can respond to this
 	pass
 
+@warning_ignore("unused_parameter")
 func _on_trade_executed(system_id: String, good_type: String, quantity: int, is_buying: bool, profit: int):
 	# Trade executed in economy system
 	pass
@@ -444,19 +446,23 @@ func _on_ship_upgraded(upgrade_type: String, new_level: int, effects: Dictionary
 	ship_stats_updated.emit(_get_current_ship_stats())
 	player_data_updated.emit(player_data)
 
+@warning_ignore("unused_parameter")
 func _on_upgrade_purchased(upgrade_type: String, cost: int):
 	# Upgrade purchased - deduct credits
 	player_data.credits -= cost
 	credits_changed.emit(player_data.credits)
 
+@warning_ignore("unused_parameter")
 func _on_artifact_discovered(artifact_id: String, system_id: String, lore_fragment: String):
 	# Artifact discovered
 	pass
 
+@warning_ignore("unused_parameter")
 func _on_artifact_collected(artifact_id: String, effects: Dictionary):
 	# Artifact collected and effects applied
 	_apply_artifact_bonuses()
 
+@warning_ignore("unused_parameter")
 func _on_precursor_lore_unlocked(civilization: String, lore_text: String):
 	# New precursor lore unlocked
 	player_data.precursor_lore[civilization]["discovered"] = true
@@ -466,6 +472,7 @@ func _on_trading_post_created(system_id: String, config: Dictionary):
 	# Trading post created
 	player_data.trading_posts[system_id] = config
 
+@warning_ignore("unused_parameter")
 func _on_automation_profit_generated(amount: int, source: String):
 	# Automation generated profit
 	player_data.credits += amount
@@ -473,10 +480,12 @@ func _on_automation_profit_generated(amount: int, source: String):
 	player_data.statistics.total_credits_earned += amount
 	credits_changed.emit(player_data.credits)
 
+@warning_ignore("unused_parameter")
 func _on_event_triggered(event_type: String, duration: float, effects: Dictionary):
 	# Dynamic event triggered
 	pass
 
+@warning_ignore("unused_parameter")
 func _on_event_expired(event_type: String):
 	# Dynamic event expired
 	pass

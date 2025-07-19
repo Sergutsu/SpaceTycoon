@@ -274,6 +274,7 @@ func _show_tooltip(system_id: String):
 			break
 	
 	# Build tooltip text
+	@warning_ignore("shadowed_variable_base_class")
 	var tooltip_text = system_data["name"] + "\n"
 	tooltip_text += "Type: " + system_data["type"].capitalize() + "\n"
 	tooltip_text += "Risk: " + system_data["risk_level"].capitalize() + "\n"
@@ -319,10 +320,12 @@ func _on_location_changed(system_id: String):
 	# Update visual indicators for newly explored systems
 	_update_system_visuals()
 
+@warning_ignore("unused_parameter")
 func _on_fuel_changed(new_fuel: int):
 	# Update travel button states based on fuel availability
 	_update_system_visuals()
 
+@warning_ignore("unused_parameter")
 func _on_player_data_updated(data: Dictionary):
 	# Update system visuals when player data changes
 	_update_system_visuals()

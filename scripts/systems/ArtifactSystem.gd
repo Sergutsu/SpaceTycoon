@@ -2,6 +2,7 @@ extends Node
 class_name ArtifactSystem
 
 # Artifact system signals
+@warning_ignore("unused_signal")
 signal artifact_discovered(artifact_id: String, system_id: String, lore_fragment: String)
 signal artifact_collected(artifact_id: String, effects: Dictionary)
 signal precursor_lore_unlocked(civilization: String, lore_text: String)
@@ -130,6 +131,7 @@ func collect_artifact(artifact_id: String) -> Dictionary:
 func get_active_bonuses() -> Dictionary:
 	return active_bonuses
 
+@warning_ignore("unused_parameter")
 func get_trade_bonus(good_type: String = "") -> float:
 	return active_bonuses.get("trade_bonus", 0.0)
 

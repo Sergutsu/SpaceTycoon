@@ -4,6 +4,7 @@ class_name ShipSystem
 # Ship system signals
 signal ship_upgraded(upgrade_type: String, new_level: int, effects: Dictionary)
 signal upgrade_purchased(upgrade_type: String, cost: int)
+@warning_ignore("unused_signal")
 signal ship_stats_updated(stats: Dictionary)
 
 # Ship upgrade definitions
@@ -104,9 +105,11 @@ func apply_upgrade_effects(upgrade_type: String, new_level: int) -> Dictionary:
 	
 	return effects
 
+@warning_ignore("unused_parameter")
 func calculate_travel_cost(from_system: String, to_system: String, base_cost: int, fuel_efficiency: float) -> int:
 	return max(1, int(base_cost * fuel_efficiency))
 
+@warning_ignore("unused_parameter")
 func calculate_travel_time(from_system: String, to_system: String, base_time: float, speed_multiplier: float) -> float:
 	return base_time / speed_multiplier
 

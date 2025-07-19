@@ -143,6 +143,7 @@ func _execute_automated_trades(system_id: String, post: Dictionary):
 		automation_profit_generated.emit(simulated_profit, system_id)
 		trading_post_status_updated.emit(system_id, post)
 
+@warning_ignore("unused_parameter")
 func _simulate_trading_profit(system_id: String, post: Dictionary) -> int:
 	# Simple simulation - would be replaced with actual market integration
 	var base_profit = 100

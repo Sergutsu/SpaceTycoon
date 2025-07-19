@@ -212,7 +212,7 @@ func _update_travel_display():
 		travel_container.add_child(travel_item)
 	
 	# Add refuel option if needed
-	if game_manager.fuel < game_manager.max_fuel:
+	if game_manager.player_data.ship.current_fuel < game_manager.player_data.ship.fuel_capacity:
 		var refuel_item = _create_refuel_item()
 		travel_container.add_child(refuel_item)
 
@@ -245,7 +245,7 @@ func _create_travel_item(destination: Dictionary) -> Control:
 	# Travel button
 	var travel_button = Button.new()
 	travel_button.text = "Travel"
-	travel_button.disabled = game_manager.fuel < destination["fuel_cost"]
+	travel_button.disabled = game_manager.player_data.ship.current_fuel < destination["fuel_cost"]
 	travel_button.pressed.connect(_on_travel_pressed.bind(destination["id"]))
 	
 	container.add_child(info_container)
@@ -453,14 +453,17 @@ func _on_upgrade_pressed(upgrade_type: String):
 		print("Upgrade failed: " + result["error"])
 
 # Artifact system signal handlers
+@warning_ignore("unused_parameter")
 func _on_artifact_discovered(artifact_id: String, system_id: String, lore_fragment: String):
 	# Show artifact discovery notification
 	_show_artifact_discovery_notification(artifact_id, lore_fragment)
 
+@warning_ignore("unused_parameter")
 func _on_artifact_collected(artifact_id: String, effects: Dictionary):
 	# Update artifact display
 	_update_artifact_display()
 
+@warning_ignore("unused_parameter")
 func _on_precursor_lore_unlocked(civilization: String, lore_text: String):
 	# Update lore display
 	_update_artifact_display()
@@ -666,6 +669,7 @@ func _on_event_triggered(event_type: String, duration: float, effects: Dictionar
 	_update_market_display()
 	_update_travel_display()
 
+@warning_ignore("unused_parameter")
 func _on_event_expired(event_type: String):
 	# Update event display
 	_update_event_display()
@@ -673,6 +677,7 @@ func _on_event_expired(event_type: String):
 	_update_market_display()
 	_update_travel_display()
 
+@warning_ignore("unused_parameter")
 func _on_event_effects_updated(active_effects: Dictionary):
 	# Update displays that show event effects
 	_update_event_display()

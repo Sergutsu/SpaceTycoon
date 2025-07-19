@@ -196,9 +196,18 @@ func execute_trade(system_id: String, good_type: String, quantity: int, is_buyin
 	# Update market trends
 	_update_market_trends(key, is_buying, quantity)
 	
+	# Calculate profit for the signal
+	var current_price = calculate_dynamic_price(system_id, good_type)
+	var profit = 0
+	if is_buying:
+		profit = -current_price * quantity  # Negative profit for buying (cost)
+	else:
+		profit = current_price * quantity   # Positive profit for selling
+	
 	# Emit signals
 	supply_demand_changed.emit(system_id, good_type, supply_demand_factors[key])
 	market_prices_updated.emit(system_id, get_system_prices(system_id))
+	trade_executed.emit(system_id, good_type, quantity, is_buying, profit)
 	
 	return {"success": true}
 
@@ -258,6 +267,7 @@ func _predict_price_range(good_type: String, accuracy: float) -> Dictionary:
 	for system_id in star_systems.keys():
 		if star_systems[system_id]["goods"].has(good_type):
 			var current_price = calculate_dynamic_price(system_id, good_type)
+			@warning_ignore("unused_variable")
 			var base_price = star_systems[system_id]["goods"][good_type]["base_price"]
 			var volatility = star_systems[system_id]["goods"][good_type]["volatility"]
 			

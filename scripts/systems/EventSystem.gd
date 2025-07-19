@@ -331,7 +331,7 @@ func _check_for_new_events():
 		var selected_event = available_events[randi() % available_events.size()]
 		trigger_event(selected_event)
 
-func _update_active_events(delta: float):
+func _update_active_events(_delta: float):
 	var current_time = Time.get_unix_time_from_system()
 	var events_to_remove = []
 	
