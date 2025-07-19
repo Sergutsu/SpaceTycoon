@@ -36,7 +36,7 @@ func _on_fuel_changed(new_fuel: int):
 
 func _on_cargo_changed(_cargo_dict: Dictionary):
 	var total_cargo = game_manager.get_total_cargo()
-	cargo_label.text = "Cargo: " + str(total_cargo) + "/" + str(game_manager.cargo_capacity)
+	cargo_label.text = "Cargo: " + str(total_cargo) + "/" + str(game_manager.player_data.ship.cargo_capacity)
 	_update_market_display()
 
 func _on_location_changed(_planet_id: String):
@@ -45,28 +45,34 @@ func _on_location_changed(_planet_id: String):
 	_update_travel_display()
 
 func _update_location_display():
-	var planet = game_manager.get_current_planet()
-	location_title.text = "Current Location: " + planet["name"]
-	location_description.text = planet["description"]
+	var system = game_manager.get_current_system()
+	location_title.text = "Current Location: " + system["name"]
+	
+	# Create description based on system type and features
+	var description = system["type"].capitalize() + " system"
+	if system.has("special_features") and system["special_features"].size() > 0:
+		description += " with " + ", ".join(system["special_features"]).replace("_", " ")
+	description += ". Risk level: " + system["risk_level"].capitalize() + "."
+	
+	location_description.text = description
 
 func _update_market_display():
 	# Clear existing market items
 	for child in market_container.get_children():
 		child.queue_free()
 	
-	var planet = game_manager.get_current_planet()
+	var system = game_manager.get_current_system()
+	var current_system_id = game_manager.player_data.current_system
 	
 	# Create market items for each good
-	for good_type in planet["goods"].keys():
-		var good_data = planet["goods"][good_type]
-		var buy_price = game_manager.calculate_price(good_data["base_price"], good_data["supply"], good_data["demand"], true)
-		var sell_price = game_manager.calculate_price(good_data["base_price"], good_data["supply"], good_data["demand"], false)
-		var player_has = game_manager.cargo.get(good_type, 0)
+	for good_type in system["goods"].keys():
+		var price = game_manager.economy_system.calculate_dynamic_price(current_system_id, good_type)
+		var player_has = game_manager.player_data.inventory.get(good_type, 0)
 		
-		var market_item = _create_market_item(good_type, buy_price, sell_price, player_has)
+		var market_item = _create_market_item(good_type, price, player_has)
 		market_container.add_child(market_item)
 
-func _create_market_item(good_type: String, buy_price: int, sell_price: int, player_has: int) -> Control:
+func _create_market_item(good_type: String, price: int, player_has: int) -> Control:
 	var container = HBoxContainer.new()
 	
 	# Good info
@@ -74,7 +80,7 @@ func _create_market_item(good_type: String, buy_price: int, sell_price: int, pla
 	var name_label = Label.new()
 	name_label.text = good_type.capitalize()
 	var price_label = Label.new()
-	price_label.text = "Buy: $" + str(buy_price) + " | Sell: $" + str(sell_price)
+	price_label.text = "Price: $" + str(price)
 	var inventory_label = Label.new()
 	inventory_label.text = "You have: " + str(player_has)
 	
@@ -87,13 +93,13 @@ func _create_market_item(good_type: String, buy_price: int, sell_price: int, pla
 	var button_container = HBoxContainer.new()
 	var buy_button = Button.new()
 	buy_button.text = "Buy"
-	buy_button.disabled = game_manager.credits < buy_price or game_manager.get_total_cargo() >= game_manager.cargo_capacity
-	buy_button.pressed.connect(_on_buy_pressed.bind(good_type, buy_price))
+	buy_button.disabled = game_manager.player_data.credits < price or game_manager.get_total_cargo() >= game_manager.player_data.ship.cargo_capacity
+	buy_button.pressed.connect(_on_buy_pressed.bind(good_type))
 	
 	var sell_button = Button.new()
 	sell_button.text = "Sell"
 	sell_button.disabled = player_has <= 0
-	sell_button.pressed.connect(_on_sell_pressed.bind(good_type, sell_price))
+	sell_button.pressed.connect(_on_sell_pressed.bind(good_type))
 	
 	button_container.add_child(buy_button)
 	button_container.add_child(sell_button)
@@ -147,12 +153,16 @@ func _create_travel_item(destination: Dictionary) -> Control:
 func _create_refuel_item() -> Control:
 	var container = HBoxContainer.new()
 	
+	# Calculate refuel cost
+	var fuel_needed = game_manager.player_data.ship.fuel_capacity - game_manager.player_data.ship.current_fuel
+	var refuel_cost = fuel_needed * 2
+	
 	# Refuel info
 	var info_container = VBoxContainer.new()
 	var name_label = Label.new()
 	name_label.text = "Refuel"
 	var cost_label = Label.new()
-	cost_label.text = "Cost: $" + str(game_manager.get_refuel_cost())
+	cost_label.text = "Cost: $" + str(refuel_cost)
 	
 	info_container.add_child(name_label)
 	info_container.add_child(cost_label)
@@ -161,7 +171,7 @@ func _create_refuel_item() -> Control:
 	# Refuel button
 	var refuel_button = Button.new()
 	refuel_button.text = "Refuel"
-	refuel_button.disabled = game_manager.credits < game_manager.get_refuel_cost()
+	refuel_button.disabled = game_manager.player_data.credits < refuel_cost or fuel_needed <= 0
 	refuel_button.pressed.connect(_on_refuel_pressed)
 	
 	container.add_child(info_container)
@@ -169,14 +179,14 @@ func _create_refuel_item() -> Control:
 	
 	return container
 
-func _on_buy_pressed(good_type: String, price: int):
-	game_manager.buy_good(good_type, price)
+func _on_buy_pressed(good_type: String):
+	game_manager.buy_good(good_type, 1)
 
-func _on_sell_pressed(good_type: String, price: int):
-	game_manager.sell_good(good_type, price)
+func _on_sell_pressed(good_type: String):
+	game_manager.sell_good(good_type, 1)
 
-func _on_travel_pressed(planet_id: String):
-	game_manager.travel_to_planet(planet_id)
+func _on_travel_pressed(system_id: String):
+	game_manager.travel_to_system(system_id)
 
 func _on_refuel_pressed():
 	game_manager.refuel_ship()

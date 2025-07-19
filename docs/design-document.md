@@ -111,11 +111,11 @@ Create a compelling 2-4 hour gameplay loop that demonstrates the core trading me
    ```gdscript
    # Expanded from current 3 to 5 systems
    var star_systems = {
-       "terra_system": {...},      # Agricultural hub
-       "minerva_system": {...},    # Mining colony  
-       "luxuria_system": {...},    # Tourist destination
-       "frontier_outpost": {...},  # High-risk, high-reward
-       "nexus_station": {...}      # Central trading hub
+	   "terra_system": {...},      # Agricultural hub
+	   "minerva_system": {...},    # Mining colony  
+	   "luxuria_system": {...},    # Tourist destination
+	   "frontier_outpost": {...},  # High-risk, high-reward
+	   "nexus_station": {...}      # Central trading hub
    }
    ```
 
@@ -123,10 +123,10 @@ Create a compelling 2-4 hour gameplay loop that demonstrates the core trading me
    ```gdscript
    # Ship progression system
    var ship_upgrades = {
-       "cargo_capacity": [50, 75, 100, 150, 200],
-       "fuel_efficiency": [1.0, 0.9, 0.8, 0.7, 0.6],
-       "speed": [1.0, 1.2, 1.5, 2.0, 2.5],
-       "scanner_range": [1, 2, 3, 4, 5]  # For artifact discovery
+	   "cargo_capacity": [50, 75, 100, 150, 200],
+	   "fuel_efficiency": [1.0, 0.9, 0.8, 0.7, 0.6],
+	   "speed": [1.0, 1.2, 1.5, 2.0, 2.5],
+	   "scanner_range": [1, 2, 3, 4, 5]  # For artifact discovery
    }
    ```
 
@@ -134,16 +134,16 @@ Create a compelling 2-4 hour gameplay loop that demonstrates the core trading me
    ```gdscript
    # Simple artifact system for MVP
    var artifacts = {
-       "chronovore_fragment": {
-           "effect": "reduce_travel_time",
-           "magnitude": 0.1,
-           "rarity": "common"
-       },
-       "silica_seed": {
-           "effect": "boost_planet_production", 
-           "magnitude": 0.15,
-           "rarity": "uncommon"
-       }
+	   "chronovore_fragment": {
+		   "effect": "reduce_travel_time",
+		   "magnitude": 0.1,
+		   "rarity": "common"
+	   },
+	   "silica_seed": {
+		   "effect": "boost_planet_production", 
+		   "magnitude": 0.15,
+		   "rarity": "uncommon"
+	   }
    }
    ```
 
@@ -151,9 +151,9 @@ Create a compelling 2-4 hour gameplay loop that demonstrates the core trading me
    ```gdscript
    # First step toward idle mechanics
    var trading_posts = {
-       "auto_buy_threshold": 0.8,   # Buy when price < 80% of average
-       "auto_sell_threshold": 1.2,  # Sell when price > 120% of average
-       "efficiency": 0.7            # 70% of manual trading profit
+	   "auto_buy_threshold": 0.8,   # Buy when price < 80% of average
+	   "auto_sell_threshold": 1.2,  # Sell when price > 120% of average
+	   "efficiency": 0.7            # 70% of manual trading profit
    }
    ```
 
@@ -161,9 +161,9 @@ Create a compelling 2-4 hour gameplay loop that demonstrates the core trading me
    ```gdscript
    # Random events to add variety
    var events = [
-       {"type": "solar_flare", "effect": "fuel_cost_increase", "duration": 300},
-       {"type": "trade_boom", "effect": "price_volatility_increase", "duration": 600},
-       {"type": "artifact_signal", "effect": "reveal_artifact_location", "duration": 0}
+	   {"type": "solar_flare", "effect": "fuel_cost_increase", "duration": 300},
+	   {"type": "trade_boom", "effect": "price_volatility_increase", "duration": 600},
+	   {"type": "artifact_signal", "effect": "reveal_artifact_location", "duration": 0}
    ]
    ```
 
@@ -183,11 +183,11 @@ var event_system: EventSystem
 
 # Progression tracking
 var player_stats = {
-    "total_credits_earned": 0,
-    "systems_visited": [],
-    "artifacts_found": [],
-    "upgrades_purchased": [],
-    "automation_level": 0
+	"total_credits_earned": 0,
+	"systems_visited": [],
+	"artifacts_found": [],
+	"upgrades_purchased": [],
+	"automation_level": 0
 }
 ```
 

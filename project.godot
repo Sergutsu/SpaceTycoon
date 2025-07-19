@@ -15,7 +15,6 @@ config/description="A space-themed tycoon game where you build and manage a tran
 run/main_scene="res://scenes/Main.tscn"
 config/features=PackedStringArray("4.5", "Forward Plus")
 
-
 [display]
 
 window/size/viewport_width=1200
