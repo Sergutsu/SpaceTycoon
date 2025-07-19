@@ -10,7 +10,6 @@ data_*/
 mono_crash.*.json
 
 # IDE and editor ignores
-.kiro/
 .vscode/
 .idea/
 *.tmp
