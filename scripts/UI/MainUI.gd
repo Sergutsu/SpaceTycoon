@@ -15,6 +15,9 @@ class_name MainUI
 @onready var artifact_container: VBoxContainer = $GameArea/Panels/ArtifactPanel/VBoxContainer/TabContainer/Artifacts/ArtifactContainer
 @onready var lore_container: VBoxContainer = $GameArea/Panels/ArtifactPanel/VBoxContainer/TabContainer/Lore/LoreContainer
 @onready var event_container: VBoxContainer = $GameArea/Panels/EventPanel/VBoxContainer/EventContainer
+@onready var automation_panel: Panel = $GameArea/Panels/AutomationPanel
+@onready var automation_overview_container: VBoxContainer = $GameArea/Panels/AutomationPanel/VBoxContainer/TabContainer/Overview/OverviewContainer
+@onready var automation_management_container: VBoxContainer = $GameArea/Panels/AutomationPanel/VBoxContainer/TabContainer/Management/ManagementContainer
 @onready var event_notification: AcceptDialog = $EventNotification
 @onready var event_name_label: Label = $EventNotification/VBoxContainer/EventName
 @onready var event_description_label: Label = $EventNotification/VBoxContainer/EventDescription
@@ -58,6 +61,12 @@ func _ready():
 	game_manager.event_system.event_expired.connect(_on_event_expired)
 	game_manager.event_system.event_effects_updated.connect(_on_event_effects_updated)
 	
+	# Connect automation system signals
+	game_manager.automation_system.trading_post_created.connect(_on_trading_post_created)
+	game_manager.automation_system.automation_profit_generated.connect(_on_automation_profit_generated)
+	game_manager.automation_system.trading_post_status_updated.connect(_on_trading_post_status_updated)
+	game_manager.automation_system.trading_post_trade_executed.connect(_on_trading_post_trade_executed)
+	
 	# Initial UI update
 	_update_location_display()
 	_update_market_display()
@@ -65,6 +74,7 @@ func _ready():
 	_update_upgrade_display()
 	_update_artifact_display()
 	_update_event_display()
+	_update_automation_display()
 
 func _process(delta):
 	# Update event display timer
@@ -110,6 +120,7 @@ func _on_location_changed(_planet_id: String):
 	_update_market_display()
 	_update_travel_display()
 	_update_upgrade_display()
+	_update_automation_display()
 
 func _on_ship_stats_updated(_stats: Dictionary):
 	_update_upgrade_display()
@@ -870,3 +881,545 @@ func _format_event_effect(effect_key: String, effect_value) -> String:
 			return "Affects " + ", ".join(effect_value)
 		_:
 			return ""
+
+# Automation system signal handlers
+@warning_ignore("unused_parameter")
+func _on_trading_post_created(system_id: String, config: Dictionary):
+	_update_automation_display()
+
+@warning_ignore("unused_parameter")
+func _on_automation_profit_generated(amount: int, source: String):
+	# Update automation display to show new profit
+	_update_automation_display()
+
+@warning_ignore("unused_parameter")
+func _on_trading_post_status_updated(system_id: String, status: Dictionary):
+	_update_automation_display()
+
+@warning_ignore("unused_parameter")
+func _on_trading_post_trade_executed(system_id: String, good_type: String, quantity: int, profit: int):
+	# Could show a small notification or update display
+	_update_automation_display()
+
+# Automation UI functions
+func _update_automation_display():
+	# Show automation panel only if player has AI Core level 1+
+	var ai_level = game_manager.player_data.ship.upgrades.ai_core
+	automation_panel.visible = (ai_level >= 1)
+	
+	if not automation_panel.visible:
+		return
+	
+	# Update overview tab
+	_update_automation_overview()
+	
+	# Update management tab
+	_update_automation_management()
+
+func _update_automation_overview():
+	# Clear existing overview items
+	for child in automation_overview_container.get_children():
+		child.queue_free()
+	
+	# Get automation summary
+	var summary = game_manager.automation_system.get_automation_summary()
+	
+	# Create summary display
+	var summary_container = VBoxContainer.new()
+	summary_container.add_theme_constant_override("separation", 10)
+	
+	# Title
+	var title_label = Label.new()
+	title_label.text = "Automation Overview"
+	title_label.add_theme_font_size_override("font_size", 16)
+	summary_container.add_child(title_label)
+	
+	# Statistics
+	var stats_container = VBoxContainer.new()
+	
+	var total_posts_label = Label.new()
+	total_posts_label.text = "Total Trading Posts: " + str(summary["total_posts"])
+	stats_container.add_child(total_posts_label)
+	
+	var active_posts_label = Label.new()
+	active_posts_label.text = "Active Posts: " + str(summary["active_posts"])
+	stats_container.add_child(active_posts_label)
+	
+	var total_profit_label = Label.new()
+	total_profit_label.text = "Total Automation Profit: $" + str(summary["total_profit"])
+	total_profit_label.modulate = Color.GREEN
+	stats_container.add_child(total_profit_label)
+	
+	var total_trades_label = Label.new()
+	total_trades_label.text = "Total Automated Trades: " + str(summary["total_trades"])
+	stats_container.add_child(total_trades_label)
+	
+	var efficiency_label = Label.new()
+	efficiency_label.text = "Average Efficiency: " + str(int(summary["average_efficiency"] * 100)) + "%"
+	stats_container.add_child(efficiency_label)
+	
+	summary_container.add_child(stats_container)
+	
+	# Add separator
+	var separator = HSeparator.new()
+	summary_container.add_child(separator)
+	
+	# Individual trading post status
+	var posts_title = Label.new()
+	posts_title.text = "Trading Post Status"
+	posts_title.add_theme_font_size_override("font_size", 14)
+	summary_container.add_child(posts_title)
+	
+	var trading_posts = game_manager.automation_system.get_all_trading_posts()
+	
+	if trading_posts.is_empty():
+		var no_posts_label = Label.new()
+		no_posts_label.text = "No trading posts established yet.\nCreate trading posts to begin automation!"
+		no_posts_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		no_posts_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		no_posts_label.modulate = Color(0.7, 0.7, 0.7)
+		summary_container.add_child(no_posts_label)
+	else:
+		for system_id in trading_posts.keys():
+			var post_item = _create_trading_post_overview_item(system_id, trading_posts[system_id])
+			summary_container.add_child(post_item)
+	
+	automation_overview_container.add_child(summary_container)
+
+func _create_trading_post_overview_item(system_id: String, post_data: Dictionary) -> Control:
+	var container = VBoxContainer.new()
+	container.add_theme_constant_override("separation", 5)
+	
+	# Header with system name and status
+	var header_container = HBoxContainer.new()
+	
+	var system_data = game_manager.economy_system.get_system_data(system_id)
+	var name_label = Label.new()
+	name_label.text = system_data["name"]
+	name_label.add_theme_font_size_override("font_size", 13)
+	
+	var status_label = Label.new()
+	status_label.text = "Active" if post_data["active"] else "Inactive"
+	status_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	status_label.modulate = Color.GREEN if post_data["active"] else Color.GRAY
+	
+	header_container.add_child(name_label)
+	header_container.add_child(status_label)
+	
+	# Performance metrics
+	var metrics_container = HBoxContainer.new()
+	
+	var profit_label = Label.new()
+	profit_label.text = "Profit: $" + str(post_data["profit_generated"])
+	profit_label.add_theme_font_size_override("font_size", 11)
+	profit_label.modulate = Color.GREEN
+	
+	var trades_label = Label.new()
+	trades_label.text = "Trades: " + str(post_data["trades_executed"])
+	trades_label.add_theme_font_size_override("font_size", 11)
+	
+	var efficiency_label = Label.new()
+	efficiency_label.text = "Efficiency: " + str(int(post_data["efficiency"] * 100)) + "%"
+	efficiency_label.add_theme_font_size_override("font_size", 11)
+	
+	metrics_container.add_child(profit_label)
+	metrics_container.add_child(VSeparator.new())
+	metrics_container.add_child(trades_label)
+	metrics_container.add_child(VSeparator.new())
+	metrics_container.add_child(efficiency_label)
+	
+	# Recent activity
+	var activity = game_manager.automation_system.get_trading_post_recent_activity(system_id, 3)
+	if not activity.is_empty():
+		var activity_label = Label.new()
+		var activity_text = "Recent: "
+		for i in range(min(3, activity.size())):
+			var trade = activity[activity.size() - 1 - i]  # Most recent first
+			if i > 0:
+				activity_text += ", "
+			activity_text += trade["action"] + " " + str(trade["quantity"]) + " " + trade["good_type"]
+		
+		activity_label.text = activity_text
+		activity_label.add_theme_font_size_override("font_size", 10)
+		activity_label.modulate = Color(0.8, 0.8, 0.8)
+		container.add_child(activity_label)
+	
+	container.add_child(header_container)
+	container.add_child(metrics_container)
+	
+	# Add separator
+	var separator = HSeparator.new()
+	separator.modulate = Color(0.5, 0.5, 0.5)
+	container.add_child(separator)
+	
+	return container
+
+func _update_automation_management():
+	# Clear existing management items
+	for child in automation_management_container.get_children():
+		child.queue_free()
+	
+	var management_container = VBoxContainer.new()
+	management_container.add_theme_constant_override("separation", 15)
+	
+	# Title
+	var title_label = Label.new()
+	title_label.text = "Trading Post Management"
+	title_label.add_theme_font_size_override("font_size", 16)
+	management_container.add_child(title_label)
+	
+	# Current system trading post creation/management
+	var current_system = game_manager.player_data.current_system
+	var current_system_data = game_manager.economy_system.get_system_data(current_system)
+	
+	var current_system_container = VBoxContainer.new()
+	current_system_container.add_theme_constant_override("separation", 10)
+	
+	var system_title = Label.new()
+	system_title.text = "Current System: " + current_system_data["name"]
+	system_title.add_theme_font_size_override("font_size", 14)
+	current_system_container.add_child(system_title)
+	
+	# Check if trading post exists at current system
+	var existing_post = game_manager.automation_system.get_trading_post_status(current_system)
+	
+	if existing_post.is_empty():
+		# Show creation interface
+		var creation_item = _create_trading_post_creation_interface(current_system)
+		current_system_container.add_child(creation_item)
+	else:
+		# Show management interface
+		var management_item = _create_trading_post_management_interface(current_system, existing_post)
+		current_system_container.add_child(management_item)
+	
+	management_container.add_child(current_system_container)
+	
+	# Add separator
+	var separator = HSeparator.new()
+	management_container.add_child(separator)
+	
+	# System recommendations
+	var recommendations = game_manager.automation_system.get_system_trading_recommendations(current_system)
+	if not recommendations.is_empty():
+		var recommendations_item = _create_trading_recommendations_display(recommendations)
+		management_container.add_child(recommendations_item)
+	
+	automation_management_container.add_child(management_container)
+
+func _create_trading_post_creation_interface(system_id: String) -> Control:
+	var container = VBoxContainer.new()
+	container.add_theme_constant_override("separation", 10)
+	
+	# Check requirements
+	var ai_level = game_manager.player_data.ship.upgrades.ai_core
+	var credits = game_manager.player_data.credits
+	var can_create = game_manager.automation_system.can_create_trading_post(system_id, ai_level, credits)
+	
+	# Requirements display
+	var requirements_container = VBoxContainer.new()
+	
+	var requirements_title = Label.new()
+	requirements_title.text = "Trading Post Requirements:"
+	requirements_title.add_theme_font_size_override("font_size", 12)
+	requirements_container.add_child(requirements_title)
+	
+	var ai_requirement = Label.new()
+	ai_requirement.text = "• AI Core Level 1+ " + ("✓" if ai_level >= 1 else "✗")
+	ai_requirement.modulate = Color.GREEN if ai_level >= 1 else Color.RED
+	requirements_container.add_child(ai_requirement)
+	
+	var credits_requirement = Label.new()
+	var cost = game_manager.automation_system.trading_post_template["cost"]
+	credits_requirement.text = "• Credits: $" + str(cost) + " " + ("✓" if credits >= cost else "✗")
+	credits_requirement.modulate = Color.GREEN if credits >= cost else Color.RED
+	requirements_container.add_child(credits_requirement)
+	
+	container.add_child(requirements_container)
+	
+	if can_create:
+		# Configuration interface
+		var config_container = VBoxContainer.new()
+		config_container.add_theme_constant_override("separation", 8)
+		
+		var config_title = Label.new()
+		config_title.text = "Configuration:"
+		config_title.add_theme_font_size_override("font_size", 12)
+		config_container.add_child(config_title)
+		
+		# Cargo allocation slider
+		var cargo_container = HBoxContainer.new()
+		var cargo_label = Label.new()
+		cargo_label.text = "Cargo Allocation: "
+		cargo_label.custom_minimum_size.x = 120
+		
+		var cargo_slider = HSlider.new()
+		cargo_slider.min_value = 10
+		cargo_slider.max_value = 50
+		cargo_slider.value = 20
+		cargo_slider.step = 5
+		cargo_slider.custom_minimum_size.x = 150
+		
+		var cargo_value_label = Label.new()
+		cargo_value_label.text = str(int(cargo_slider.value))
+		cargo_slider.value_changed.connect(func(value): cargo_value_label.text = str(int(value)))
+		
+		cargo_container.add_child(cargo_label)
+		cargo_container.add_child(cargo_slider)
+		cargo_container.add_child(cargo_value_label)
+		config_container.add_child(cargo_container)
+		
+		# Buy threshold slider
+		var buy_container = HBoxContainer.new()
+		var buy_label = Label.new()
+		buy_label.text = "Buy Threshold: "
+		buy_label.custom_minimum_size.x = 120
+		
+		var buy_slider = HSlider.new()
+		buy_slider.min_value = 0.6
+		buy_slider.max_value = 0.9
+		buy_slider.value = 0.8
+		buy_slider.step = 0.05
+		buy_slider.custom_minimum_size.x = 150
+		
+		var buy_value_label = Label.new()
+		buy_value_label.text = str(int(buy_slider.value * 100)) + "%"
+		buy_slider.value_changed.connect(func(value): buy_value_label.text = str(int(value * 100)) + "%")
+		
+		buy_container.add_child(buy_label)
+		buy_container.add_child(buy_slider)
+		buy_container.add_child(buy_value_label)
+		config_container.add_child(buy_container)
+		
+		# Sell threshold slider
+		var sell_container = HBoxContainer.new()
+		var sell_label = Label.new()
+		sell_label.text = "Sell Threshold: "
+		sell_label.custom_minimum_size.x = 120
+		
+		var sell_slider = HSlider.new()
+		sell_slider.min_value = 1.1
+		sell_slider.max_value = 1.8
+		sell_slider.value = 1.2
+		sell_slider.step = 0.05
+		sell_slider.custom_minimum_size.x = 150
+		
+		var sell_value_label = Label.new()
+		sell_value_label.text = str(int(sell_slider.value * 100)) + "%"
+		sell_slider.value_changed.connect(func(value): sell_value_label.text = str(int(value * 100)) + "%")
+		
+		sell_container.add_child(sell_label)
+		sell_container.add_child(sell_slider)
+		sell_container.add_child(sell_value_label)
+		config_container.add_child(sell_container)
+		
+		container.add_child(config_container)
+		
+		# Create button
+		var create_button = Button.new()
+		create_button.text = "Create Trading Post ($" + str(cost) + ")"
+		create_button.custom_minimum_size = Vector2(200, 40)
+		create_button.pressed.connect(_on_create_trading_post_pressed.bind(system_id, {
+			"ai_level": ai_level,
+			"credits": credits,
+			"cargo_allocation": cargo_slider.value,
+			"auto_buy_threshold": buy_slider.value,
+			"auto_sell_threshold": sell_slider.value,
+			"target_goods": ["food", "minerals"]  # Default goods
+		}))
+		
+		container.add_child(create_button)
+	else:
+		var cannot_create_label = Label.new()
+		cannot_create_label.text = "Requirements not met. Upgrade your AI Core and earn more credits to establish trading posts."
+		cannot_create_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		cannot_create_label.modulate = Color(0.8, 0.6, 0.6)
+		container.add_child(cannot_create_label)
+	
+	return container
+
+func _create_trading_post_management_interface(system_id: String, post_data: Dictionary) -> Control:
+	var container = VBoxContainer.new()
+	container.add_theme_constant_override("separation", 10)
+	
+	# Status display
+	var status_container = VBoxContainer.new()
+	
+	var status_title = Label.new()
+	status_title.text = "Trading Post Status:"
+	status_title.add_theme_font_size_override("font_size", 12)
+	status_container.add_child(status_title)
+	
+	var active_status = Label.new()
+	active_status.text = "Status: " + ("Active" if post_data["active"] else "Inactive")
+	active_status.modulate = Color.GREEN if post_data["active"] else Color.GRAY
+	status_container.add_child(active_status)
+	
+	var profit_status = Label.new()
+	profit_status.text = "Total Profit: $" + str(post_data["profit_generated"])
+	profit_status.modulate = Color.GREEN
+	status_container.add_child(profit_status)
+	
+	var trades_status = Label.new()
+	trades_status.text = "Trades Executed: " + str(post_data["trades_executed"])
+	status_container.add_child(trades_status)
+	
+	var efficiency_status = Label.new()
+	efficiency_status.text = "Efficiency: " + str(int(post_data["efficiency"] * 100)) + "%"
+	status_container.add_child(efficiency_status)
+	
+	container.add_child(status_container)
+	
+	# Configuration display
+	var config_container = VBoxContainer.new()
+	
+	var config_title = Label.new()
+	config_title.text = "Current Configuration:"
+	config_title.add_theme_font_size_override("font_size", 12)
+	config_container.add_child(config_title)
+	
+	var cargo_config = Label.new()
+	cargo_config.text = "Cargo Allocation: " + str(post_data["cargo_allocation"])
+	config_container.add_child(cargo_config)
+	
+	var buy_config = Label.new()
+	buy_config.text = "Buy Threshold: " + str(int(post_data["auto_buy_threshold"] * 100)) + "%"
+	config_container.add_child(buy_config)
+	
+	var sell_config = Label.new()
+	sell_config.text = "Sell Threshold: " + str(int(post_data["auto_sell_threshold"] * 100)) + "%"
+	config_container.add_child(sell_config)
+	
+	var goods_config = Label.new()
+	goods_config.text = "Target Goods: " + ", ".join(post_data["target_goods"])
+	config_container.add_child(goods_config)
+	
+	container.add_child(config_container)
+	
+	# Inventory status
+	var inventory_status = game_manager.automation_system.get_trading_post_inventory_status(system_id)
+	if not inventory_status.is_empty():
+		var inventory_container = VBoxContainer.new()
+		
+		var inventory_title = Label.new()
+		inventory_title.text = "Inventory Status:"
+		inventory_title.add_theme_font_size_override("font_size", 12)
+		inventory_container.add_child(inventory_title)
+		
+		var utilization_label = Label.new()
+		utilization_label.text = "Cargo Utilization: " + str(int(inventory_status["cargo_utilization"] * 100)) + "% (" + str(inventory_status["total_cargo"]) + "/" + str(inventory_status["max_cargo"]) + ")"
+		inventory_container.add_child(utilization_label)
+		
+		for good_type in inventory_status["inventory"].keys():
+			var quantity = inventory_status["inventory"][good_type]
+			if quantity > 0:
+				var good_label = Label.new()
+				good_label.text = "  • " + good_type.capitalize() + ": " + str(quantity)
+				inventory_container.add_child(good_label)
+		
+		container.add_child(inventory_container)
+	
+	# Control buttons
+	var button_container = HBoxContainer.new()
+	
+	var toggle_button = Button.new()
+	toggle_button.text = "Deactivate" if post_data["active"] else "Activate"
+	toggle_button.pressed.connect(_on_toggle_trading_post_pressed.bind(system_id))
+	
+	var remove_button = Button.new()
+	remove_button.text = "Remove Post"
+	remove_button.modulate = Color.ORANGE_RED
+	remove_button.pressed.connect(_on_remove_trading_post_pressed.bind(system_id))
+	
+	button_container.add_child(toggle_button)
+	button_container.add_child(remove_button)
+	container.add_child(button_container)
+	
+	return container
+
+func _create_trading_recommendations_display(recommendations: Dictionary) -> Control:
+	var container = VBoxContainer.new()
+	container.add_theme_constant_override("separation", 8)
+	
+	var title_label = Label.new()
+	title_label.text = "Trading Recommendations"
+	title_label.add_theme_font_size_override("font_size", 14)
+	container.add_child(title_label)
+	
+	var good_recommendations = recommendations.get("good_recommendations", [])
+	
+	if good_recommendations.is_empty():
+		var no_recommendations_label = Label.new()
+		no_recommendations_label.text = "No specific recommendations available for this system."
+		no_recommendations_label.modulate = Color(0.7, 0.7, 0.7)
+		container.add_child(no_recommendations_label)
+	else:
+		for recommendation in good_recommendations:
+			var rec_item = _create_recommendation_item(recommendation)
+			container.add_child(rec_item)
+	
+	return container
+
+func _create_recommendation_item(recommendation: Dictionary) -> Control:
+	var container = HBoxContainer.new()
+	
+	var info_container = VBoxContainer.new()
+	info_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	
+	var good_label = Label.new()
+	good_label.text = recommendation["good_type"].capitalize()
+	good_label.add_theme_font_size_override("font_size", 12)
+	
+	var potential_label = Label.new()
+	potential_label.text = "Trading Potential: " + recommendation["trading_potential"].capitalize()
+	potential_label.add_theme_font_size_override("font_size", 10)
+	
+	# Color code by potential
+	match recommendation["trading_potential"]:
+		"high":
+			potential_label.modulate = Color.GREEN
+		"medium":
+			potential_label.modulate = Color.YELLOW
+		"low":
+			potential_label.modulate = Color.GRAY
+	
+	var price_label = Label.new()
+	price_label.text = "Current: $" + str(recommendation["current_price"]) + " | Average: $" + str(int(recommendation["average_price"]))
+	price_label.add_theme_font_size_override("font_size", 10)
+	price_label.modulate = Color(0.8, 0.8, 0.8)
+	
+	info_container.add_child(good_label)
+	info_container.add_child(potential_label)
+	info_container.add_child(price_label)
+	
+	container.add_child(info_container)
+	
+	return container
+
+# Trading post button handlers
+func _on_create_trading_post_pressed(system_id: String, config: Dictionary):
+	var result = game_manager.automation_system.create_trading_post(system_id, config)
+	
+	if result["success"]:
+		# Deduct credits from player
+		game_manager.player_data.credits -= result["cost"]
+		game_manager.credits_changed.emit(game_manager.player_data.credits)
+		
+		# Update display
+		_update_automation_display()
+		
+		print("Trading post created at " + result.get("system_name", "system"))
+	else:
+		print("Failed to create trading post: " + result["error"])
+
+func _on_toggle_trading_post_pressed(system_id: String):
+	var current_status = game_manager.automation_system.get_trading_post_status(system_id)
+	if not current_status.is_empty():
+		var new_active = not current_status["active"]
+		game_manager.automation_system.update_trading_post_config(system_id, {"active": new_active})
+		_update_automation_display()
+
+func _on_remove_trading_post_pressed(system_id: String):
+	if game_manager.automation_system.remove_trading_post(system_id):
+		_update_automation_display()
+		print("Trading post removed")
