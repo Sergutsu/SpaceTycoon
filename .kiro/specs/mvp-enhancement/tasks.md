@@ -81,14 +81,23 @@
   - Add visual indicators for active artifact bonuses in ship stats
   - _Requirements: 3.4, 3.5_
 
-- [ ] 5. Implement enhanced economic system
-- [ ] 5.1 Create dynamic pricing and market mechanics
+- [x] 5. Implement enhanced economic system
+
+
+
+
+
+- [x] 5.1 Create dynamic pricing and market mechanics
+
+
   - Implement supply/demand factors that respond to player trading
   - Add market history tracking and price trend analysis
   - Create market volatility system based on system characteristics
   - _Requirements: 6.1, 6.5_
 
-- [ ] 5.2 Add market prediction and analysis features
+- [x] 5.2 Add market prediction and analysis features
+
+
   - Implement market prediction system for AI Core level 2+
   - Create price trend indicators and supply/demand visualization
   - Add market forecasting with accuracy based on AI Core level

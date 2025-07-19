@@ -154,12 +154,16 @@ func get_total_cargo() -> int:
 # Buy goods
 func buy_good(good_type: String, quantity: int = 1) -> Dictionary:
 	var current_system = player_data.current_system
-	var price = economy_system.calculate_dynamic_price(current_system, good_type)
+	
+	# Get event modifier and artifact bonus
+	var event_modifier = event_system.get_price_modifier(current_system, good_type) if event_system else 1.0
+	var artifact_bonus = player_data.ship.bonuses.get("trade_bonus", 0.0)
+	
+	var price = economy_system.calculate_dynamic_price(current_system, good_type, event_modifier, artifact_bonus)
 	var total_cost = price * quantity
 	
-	# Apply artifact trade bonus to buying (as a discount)
-	var trade_bonus = player_data.ship.bonuses.get("trade_bonus", 0.0)
-	total_cost = int(total_cost * (1.0 - trade_bonus * 0.5))  # Half bonus for buying
+	# Apply additional artifact trade bonus to buying (as a discount)
+	total_cost = int(total_cost * (1.0 - artifact_bonus * 0.3))  # 30% of bonus for buying discount
 	
 	# Check if player can afford and has cargo space
 	if player_data.credits < total_cost:
@@ -195,12 +199,16 @@ func sell_good(good_type: String, quantity: int = 1) -> Dictionary:
 		return {"success": false, "error": "Insufficient goods to sell"}
 	
 	var current_system = player_data.current_system
-	var price = economy_system.calculate_dynamic_price(current_system, good_type)
+	
+	# Get event modifier and artifact bonus
+	var event_modifier = event_system.get_price_modifier(current_system, good_type) if event_system else 1.0
+	var artifact_bonus = player_data.ship.bonuses.get("trade_bonus", 0.0)
+	
+	var price = economy_system.calculate_dynamic_price(current_system, good_type, event_modifier, artifact_bonus)
 	var total_revenue = price * quantity
 	
-	# Apply artifact trade bonus to selling
-	var trade_bonus = player_data.ship.bonuses.get("trade_bonus", 0.0)
-	total_revenue = int(total_revenue * (1.0 + trade_bonus))
+	# Apply additional artifact trade bonus to selling
+	total_revenue = int(total_revenue * (1.0 + artifact_bonus))
 	
 	# Execute trade
 	player_data.credits += total_revenue
@@ -318,6 +326,36 @@ func get_precursor_lore() -> Dictionary:
 # Get active artifact bonuses
 func get_active_artifact_bonuses() -> Dictionary:
 	return artifact_system.get_active_bonuses()
+
+# Enhanced economic system functions
+func get_market_analysis(system_id: String = "") -> Dictionary:
+	var target_system = system_id if system_id != "" else player_data.current_system
+	var ai_level = player_data.ship.upgrades.ai_core
+	return economy_system.get_market_analysis(target_system, ai_level)
+
+func get_market_prediction(good_type: String) -> Dictionary:
+	var ai_level = player_data.ship.upgrades.ai_core
+	return economy_system.get_market_prediction(good_type, ai_level)
+
+func get_supply_demand_indicators(system_id: String = "") -> Dictionary:
+	var target_system = system_id if system_id != "" else player_data.current_system
+	return economy_system.get_supply_demand_indicators(target_system)
+
+func get_price_trend_indicators(system_id: String = "") -> Dictionary:
+	var target_system = system_id if system_id != "" else player_data.current_system
+	return economy_system.get_price_trend_indicators(target_system)
+
+func get_market_data(good_type: String, system_id: String = "") -> Dictionary:
+	var target_system = system_id if system_id != "" else player_data.current_system
+	return economy_system.get_market_data(target_system, good_type)
+
+func get_market_history(good_type: String, system_id: String = "", limit: int = 20) -> Array:
+	var target_system = system_id if system_id != "" else player_data.current_system
+	return economy_system.get_market_history(target_system, good_type, limit)
+
+func get_prediction_accuracy_info() -> Dictionary:
+	var ai_level = player_data.ship.upgrades.ai_core
+	return economy_system.get_prediction_accuracy_for_ai_level(ai_level)
 
 # Purchase ship upgrade
 func purchase_ship_upgrade(upgrade_type: String) -> Dictionary:
