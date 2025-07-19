@@ -9,6 +9,8 @@ class_name MainUI
 @onready var location_description: Label = $GameArea/Panels/LocationPanel/VBoxContainer/LocationDescription
 @onready var market_container: VBoxContainer = $GameArea/Panels/MarketPanel/VBoxContainer/MarketContainer
 @onready var travel_container: VBoxContainer = $GameArea/Panels/TravelPanel/VBoxContainer/TravelContainer
+@onready var upgrade_panel: Panel = $GameArea/Panels/UpgradePanel
+@onready var upgrade_container: VBoxContainer = $GameArea/Panels/UpgradePanel/VBoxContainer/ScrollContainer/UpgradeContainer
 
 # Game Manager reference
 var game_manager: GameManager
@@ -22,11 +24,13 @@ func _ready():
 	game_manager.fuel_changed.connect(_on_fuel_changed)
 	game_manager.cargo_changed.connect(_on_cargo_changed)
 	game_manager.location_changed.connect(_on_location_changed)
+	game_manager.ship_stats_updated.connect(_on_ship_stats_updated)
 	
 	# Initial UI update
 	_update_location_display()
 	_update_market_display()
 	_update_travel_display()
+	_update_upgrade_display()
 
 func _on_credits_changed(new_credits: int):
 	credits_label.text = "Credits: $" + str(new_credits)
@@ -43,6 +47,10 @@ func _on_location_changed(_planet_id: String):
 	_update_location_display()
 	_update_market_display()
 	_update_travel_display()
+	_update_upgrade_display()
+
+func _on_ship_stats_updated(_stats: Dictionary):
+	_update_upgrade_display()
 
 func _update_location_display():
 	var system = game_manager.get_current_system()
@@ -190,3 +198,161 @@ func _on_travel_pressed(system_id: String):
 
 func _on_refuel_pressed():
 	game_manager.refuel_ship()
+
+func _update_upgrade_display():
+	# Show upgrade panel only at Nexus Station
+	var current_system = game_manager.player_data.current_system
+	upgrade_panel.visible = (current_system == "nexus_station")
+	
+	if not upgrade_panel.visible:
+		return
+	
+	# Clear existing upgrade items
+	for child in upgrade_container.get_children():
+		child.queue_free()
+	
+	# Create upgrade items for each category
+	var upgrade_types = game_manager.ship_system.get_all_upgrade_types()
+	for upgrade_type in upgrade_types:
+		var current_level = game_manager.player_data.ship.upgrades[upgrade_type]
+		var upgrade_info = game_manager.ship_system.get_upgrade_info(upgrade_type, current_level)
+		
+		var upgrade_item = _create_upgrade_item(upgrade_type, upgrade_info)
+		upgrade_container.add_child(upgrade_item)
+
+func _create_upgrade_item(upgrade_type: String, upgrade_info: Dictionary) -> Control:
+	var container = VBoxContainer.new()
+	container.add_theme_constant_override("separation", 10)
+	
+	# Header with upgrade name and level
+	var header_container = HBoxContainer.new()
+	var name_label = Label.new()
+	name_label.text = upgrade_info["name"]
+	name_label.add_theme_font_size_override("font_size", 16)
+	
+	var level_label = Label.new()
+	level_label.text = "Level " + str(upgrade_info["current_level"]) + "/" + str(upgrade_info["max_level"])
+	level_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	level_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	
+	header_container.add_child(name_label)
+	header_container.add_child(level_label)
+	
+	# Description
+	var description_label = Label.new()
+	description_label.text = upgrade_info["description"]
+	description_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	description_label.add_theme_font_size_override("font_size", 12)
+	
+	# Current effects display
+	var effects_container = VBoxContainer.new()
+	var current_effects = upgrade_info.get("current_effects", {})
+	
+	if not current_effects.is_empty():
+		var current_effects_label = Label.new()
+		current_effects_label.text = "Current Effects:"
+		current_effects_label.add_theme_font_size_override("font_size", 12)
+		effects_container.add_child(current_effects_label)
+		
+		for effect_key in current_effects.keys():
+			var effect_label = Label.new()
+			effect_label.text = "  • " + _format_effect_text(effect_key, current_effects[effect_key])
+			effect_label.add_theme_font_size_override("font_size", 11)
+			effects_container.add_child(effect_label)
+	
+	# Upgrade button and next level info
+	var upgrade_section = HBoxContainer.new()
+	
+	if upgrade_info["can_upgrade"]:
+		var next_info_container = VBoxContainer.new()
+		next_info_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		
+		var next_level_label = Label.new()
+		next_level_label.text = "Next Level Effects:"
+		next_level_label.add_theme_font_size_override("font_size", 12)
+		next_info_container.add_child(next_level_label)
+		
+		var next_effects = upgrade_info.get("next_effects", {})
+		for effect_key in next_effects.keys():
+			var effect_label = Label.new()
+			effect_label.text = "  • " + _format_effect_text(effect_key, next_effects[effect_key])
+			effect_label.add_theme_font_size_override("font_size", 11)
+			effect_label.modulate = Color.GREEN
+			next_info_container.add_child(effect_label)
+		
+		var cost_label = Label.new()
+		cost_label.text = "Cost: $" + str(upgrade_info["next_cost"])
+		cost_label.add_theme_font_size_override("font_size", 12)
+		next_info_container.add_child(cost_label)
+		
+		upgrade_section.add_child(next_info_container)
+		
+		# Upgrade button
+		var button_container = VBoxContainer.new()
+		var upgrade_button = Button.new()
+		upgrade_button.text = "Upgrade"
+		upgrade_button.custom_minimum_size = Vector2(100, 40)
+		
+		# Check affordability
+		var can_afford = game_manager.ship_system.can_afford_upgrade(
+			upgrade_type, 
+			upgrade_info["current_level"], 
+			game_manager.player_data.credits
+		)
+		
+		upgrade_button.disabled = not can_afford
+		if not can_afford:
+			upgrade_button.tooltip_text = "Insufficient credits"
+		
+		upgrade_button.pressed.connect(_on_upgrade_pressed.bind(upgrade_type))
+		
+		button_container.add_child(upgrade_button)
+		upgrade_section.add_child(button_container)
+	else:
+		var max_level_label = Label.new()
+		max_level_label.text = "Maximum level reached"
+		max_level_label.add_theme_font_size_override("font_size", 12)
+		max_level_label.modulate = Color.GOLD
+		upgrade_section.add_child(max_level_label)
+	
+	# Add all components to container
+	container.add_child(header_container)
+	container.add_child(description_label)
+	container.add_child(effects_container)
+	container.add_child(upgrade_section)
+	
+	# Add separator
+	var separator = HSeparator.new()
+	container.add_child(separator)
+	
+	return container
+
+func _format_effect_text(effect_key: String, value) -> String:
+	match effect_key:
+		"cargo_capacity":
+			return "Cargo Capacity: " + str(value)
+		"fuel_efficiency":
+			return "Fuel Efficiency: " + str(int((1.0 - value) * 100)) + "% reduction"
+		"speed_multiplier":
+			return "Travel Speed: " + str(int((value - 1.0) * 100)) + "% faster"
+		"detection_range":
+			return "Scanner Range: " + str(value)
+		"detection_chance":
+			return "Discovery Chance: " + str(int(value * 100)) + "%"
+		"automation_level":
+			return "Automation Level: " + str(value)
+		"efficiency_bonus":
+			return "Automation Efficiency: " + str(int(value * 100)) + "%"
+		_:
+			return effect_key.capitalize() + ": " + str(value)
+
+func _on_upgrade_pressed(upgrade_type: String):
+	var result = game_manager.purchase_ship_upgrade(upgrade_type)
+	
+	if result["success"]:
+		# The GameManager will handle the upgrade through signal connections
+		# UI will update automatically through the ship_stats_updated signal
+		pass
+	else:
+		# Could show error message to player
+		print("Upgrade failed: " + result["error"])

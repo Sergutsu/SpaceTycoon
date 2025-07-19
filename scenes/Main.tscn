@@ -174,3 +174,32 @@ text = "Travel"
 [node name="TravelContainer" type="VBoxContainer" parent="MainUI/GameArea/Panels/TravelPanel/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
+
+[node name="UpgradePanel" type="Panel" parent="MainUI/GameArea/Panels"]
+layout_mode = 2
+size_flags_vertical = 3
+visible = false
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MainUI/GameArea/Panels/UpgradePanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="UpgradeTitle" type="Label" parent="MainUI/GameArea/Panels/UpgradePanel/VBoxContainer"]
+layout_mode = 2
+text = "Ship Upgrades"
+
+[node name="ScrollContainer" type="ScrollContainer" parent="MainUI/GameArea/Panels/UpgradePanel/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="UpgradeContainer" type="VBoxContainer" parent="MainUI/GameArea/Panels/UpgradePanel/VBoxContainer/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3

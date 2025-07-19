@@ -296,6 +296,18 @@ func get_available_destinations() -> Array:
 func _get_current_ship_stats() -> Dictionary:
 	return ship_system.get_ship_stats(player_data.ship)
 
+# Purchase ship upgrade
+func purchase_ship_upgrade(upgrade_type: String) -> Dictionary:
+	var current_level = player_data.ship.upgrades[upgrade_type]
+	var result = ship_system.purchase_upgrade(upgrade_type, current_level, player_data.credits)
+	
+	if result["success"]:
+		# Credits are deducted through the signal handler
+		# Ship stats are updated through the signal handler
+		pass
+	
+	return result
+
 # Attempt artifact discovery when visiting systems
 func _attempt_artifact_discovery(system_id: String):
 	var scanner_level = player_data.ship.upgrades.scanner
@@ -334,10 +346,22 @@ func _on_ship_upgraded(upgrade_type: String, new_level: int, effects: Dictionary
 	# Ship upgrade completed
 	player_data.ship.upgrades[upgrade_type] = new_level
 	
-	# Apply upgrade effects to ship bonuses
-	for effect_key in effects.keys():
-		if player_data.ship.bonuses.has(effect_key):
-			player_data.ship.bonuses[effect_key] = effects[effect_key]
+	# Apply upgrade effects to ship stats and bonuses
+	match upgrade_type:
+		"cargo_hold":
+			if effects.has("cargo_capacity"):
+				player_data.ship.cargo_capacity = effects["cargo_capacity"]
+		"engine":
+			if effects.has("fuel_efficiency"):
+				player_data.ship.bonuses.fuel_efficiency = effects["fuel_efficiency"]
+			if effects.has("speed_multiplier"):
+				player_data.ship.bonuses.travel_speed = effects["speed_multiplier"]
+		"scanner":
+			if effects.has("detection_range"):
+				player_data.ship.bonuses.detection_range = effects["detection_range"]
+		"ai_core":
+			if effects.has("automation_level"):
+				player_data.ship.bonuses.automation_level = effects["automation_level"]
 	
 	ship_stats_updated.emit(_get_current_ship_stats())
 	player_data_updated.emit(player_data)

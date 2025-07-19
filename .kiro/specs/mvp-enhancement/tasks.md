@@ -28,14 +28,23 @@
   - Update travel button state management based on fuel availability
   - _Requirements: 1.3, 1.4, 1.5, 1.6_
 
-- [ ] 3. Implement ship upgrade system
-- [ ] 3.1 Create ship upgrade data structures and logic
+- [x] 3. Implement ship upgrade system
+
+
+
+
+
+- [x] 3.1 Create ship upgrade data structures and logic
+
+
   - Define upgrade_definitions with 4 categories: cargo_hold, engine, scanner, ai_core
   - Implement upgrade cost calculations and level progression
   - Create upgrade effect application system for ship stats
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
 
-- [ ] 3.2 Build upgrade shop interface at Nexus Station
+- [x] 3.2 Build upgrade shop interface at Nexus Station
+
+
   - Create upgrade shop UI panel with 4 upgrade categories
   - Display current level, next level benefits, and upgrade costs
   - Implement affordability indicators and purchase confirmation
