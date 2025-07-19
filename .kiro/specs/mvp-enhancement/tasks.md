@@ -103,14 +103,22 @@
   - Add market forecasting with accuracy based on AI Core level
   - _Requirements: 6.3, 6.6_
 
-- [ ] 6. Implement event system for dynamic gameplay
-- [ ] 6.1 Create event system architecture and data structures
+- [x] 6. Implement event system for dynamic gameplay
+
+
+
+
+- [x] 6.1 Create event system architecture and data structures
+
+
   - Define event templates (solar_flare, trade_boom, artifact_signal, pirate_activity)
   - Implement event triggering logic with probability-based occurrence
   - Create event effect application system for temporary modifiers
   - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5_
 
-- [ ] 6.2 Build event UI and notification system
+- [x] 6.2 Build event UI and notification system
+
+
   - Create event notification system with clear descriptions
   - Add UI indicators showing active events and their effects
   - Implement event duration tracking and automatic expiration

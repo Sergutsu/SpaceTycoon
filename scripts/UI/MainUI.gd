@@ -14,6 +14,13 @@ class_name MainUI
 @onready var artifact_panel: Panel = $GameArea/Panels/ArtifactPanel
 @onready var artifact_container: VBoxContainer = $GameArea/Panels/ArtifactPanel/VBoxContainer/TabContainer/Artifacts/ArtifactContainer
 @onready var lore_container: VBoxContainer = $GameArea/Panels/ArtifactPanel/VBoxContainer/TabContainer/Lore/LoreContainer
+@onready var event_container: VBoxContainer = $GameArea/Panels/EventPanel/VBoxContainer/EventContainer
+@onready var event_notification: AcceptDialog = $EventNotification
+@onready var event_name_label: Label = $EventNotification/VBoxContainer/EventName
+@onready var event_description_label: Label = $EventNotification/VBoxContainer/EventDescription
+@onready var event_effects_label: Label = $EventNotification/VBoxContainer/EffectsText
+@onready var event_duration_label: Label = $EventNotification/VBoxContainer/DurationText
+@onready var event_systems_label: Label = $EventNotification/VBoxContainer/SystemsText
 @onready var artifact_notification: AcceptDialog = $ArtifactNotification
 @onready var artifact_name_label: Label = $ArtifactNotification/VBoxContainer/ArtifactName
 @onready var artifact_description_label: Label = $ArtifactNotification/VBoxContainer/ArtifactDescription
@@ -23,9 +30,16 @@ class_name MainUI
 # Game Manager reference
 var game_manager: GameManager
 
+# Event display update timer
+var event_update_timer: float = 0.0
+var event_update_interval: float = 1.0  # Update every second
+
 func _ready():
 	# Get game manager reference
 	game_manager = get_node("../GameManager")
+	
+	# Enable processing for event timer updates
+	set_process(true)
 	
 	# Connect to game manager signals
 	game_manager.credits_changed.connect(_on_credits_changed)
@@ -39,12 +53,25 @@ func _ready():
 	game_manager.artifact_system.artifact_collected.connect(_on_artifact_collected)
 	game_manager.artifact_system.precursor_lore_unlocked.connect(_on_precursor_lore_unlocked)
 	
+	# Connect event system signals
+	game_manager.event_system.event_triggered.connect(_on_event_triggered)
+	game_manager.event_system.event_expired.connect(_on_event_expired)
+	game_manager.event_system.event_effects_updated.connect(_on_event_effects_updated)
+	
 	# Initial UI update
 	_update_location_display()
 	_update_market_display()
 	_update_travel_display()
 	_update_upgrade_display()
 	_update_artifact_display()
+	_update_event_display()
+
+func _process(delta):
+	# Update event display timer
+	event_update_timer += delta
+	if event_update_timer >= event_update_interval:
+		event_update_timer = 0.0
+		_update_event_display()
 
 func _on_credits_changed(new_credits: int):
 	var credits_text = "Credits: $" + str(new_credits)
@@ -123,8 +150,28 @@ func _create_market_item(good_type: String, price: int, player_has: int) -> Cont
 	var info_container = VBoxContainer.new()
 	var name_label = Label.new()
 	name_label.text = good_type.capitalize()
+	
+	# Check for event effects on this good
+	var current_system = game_manager.player_data.current_system
+	var system_events = game_manager.event_system.get_system_events(current_system)
+	var has_event_effect = false
+	
+	for event in system_events:
+		if event["effects"].has("specific_goods"):
+			var specific_goods = event["effects"]["specific_goods"]
+			if specific_goods.has(good_type):
+				has_event_effect = true
+				break
+		elif event["effects"].has("price_multiplier") or event["effects"].has("profit_multiplier"):
+			has_event_effect = true
+			break
+	
 	var price_label = Label.new()
-	price_label.text = "Price: $" + str(price)
+	var price_text = "Price: $" + str(price)
+	if has_event_effect:
+		price_text += " ⚡"  # Event indicator
+	price_label.text = price_text
+	
 	var inventory_label = Label.new()
 	inventory_label.text = "You have: " + str(player_has)
 	
@@ -176,8 +223,20 @@ func _create_travel_item(destination: Dictionary) -> Control:
 	var info_container = VBoxContainer.new()
 	var name_label = Label.new()
 	name_label.text = destination["name"]
+	
+	# Check for event effects on travel
+	var fuel_modifier = game_manager.event_system.get_fuel_cost_modifier()
+	var has_fuel_event = fuel_modifier != 1.0
+	var cargo_risk = game_manager.event_system.get_cargo_loss_risk()
+	var has_danger_event = cargo_risk > 0.0
+	
 	var cost_label = Label.new()
-	cost_label.text = "Fuel cost: " + str(destination["fuel_cost"])
+	var cost_text = "Fuel cost: " + str(destination["fuel_cost"])
+	if has_fuel_event:
+		cost_text += " ⚡"  # Event indicator
+	if has_danger_event:
+		cost_text += " ⚠"  # Danger indicator
+	cost_label.text = cost_text
 	
 	info_container.add_child(name_label)
 	info_container.add_child(cost_label)
@@ -596,3 +655,213 @@ func _update_ship_stats_display():
 	# This function updates visual indicators for artifact bonuses
 	# The actual stat updates are handled by the signal handlers above
 	pass
+
+# Event system signal handlers
+func _on_event_triggered(event_type: String, duration: float, effects: Dictionary):
+	# Show event notification
+	_show_event_notification(event_type, duration, effects)
+	# Update event display
+	_update_event_display()
+	# Update other displays that might be affected by events
+	_update_market_display()
+	_update_travel_display()
+
+func _on_event_expired(event_type: String):
+	# Update event display
+	_update_event_display()
+	# Update other displays that might be affected by events
+	_update_market_display()
+	_update_travel_display()
+
+func _on_event_effects_updated(active_effects: Dictionary):
+	# Update displays that show event effects
+	_update_event_display()
+
+# Event UI functions
+func _show_event_notification(event_type: String, duration: float, effects: Dictionary):
+	var event_info = game_manager.event_system.get_event_display_info(event_type)
+	
+	if event_info.is_empty():
+		return
+	
+	# Set notification content
+	event_name_label.text = event_info["name"]
+	event_description_label.text = event_info["description"]
+	
+	# Format effects text
+	var effects_text = ""
+	for effect_key in effects.keys():
+		var effect_value = effects[effect_key]
+		var effect_description = _format_event_effect(effect_key, effect_value)
+		if effect_description != "":
+			if effects_text != "":
+				effects_text += "\n"
+			effects_text += "• " + effect_description
+	
+	event_effects_label.text = effects_text
+	
+	# Format duration
+	var duration_minutes = int(duration / 60)
+	var duration_seconds = int(duration) % 60
+	event_duration_label.text = str(duration_minutes) + "m " + str(duration_seconds) + "s"
+	
+	# Format affected systems
+	var systems_text = ""
+	var affected_systems = event_info["affected_systems"]
+	if affected_systems.has("all"):
+		systems_text = "All systems"
+	else:
+		for system_id in affected_systems:
+			var system_data = game_manager.economy_system.get_system_data(system_id)
+			if systems_text != "":
+				systems_text += ", "
+			systems_text += system_data["name"]
+	
+	event_systems_label.text = systems_text
+	
+	# Show notification
+	event_notification.popup_centered()
+
+func _update_event_display():
+	# Clear existing event items
+	for child in event_container.get_children():
+		child.queue_free()
+	
+	var active_events = game_manager.event_system.get_active_events_display()
+	
+	if active_events.is_empty():
+		var no_events_label = Label.new()
+		no_events_label.text = "No active events.\nThe galaxy is peaceful for now..."
+		no_events_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		no_events_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		no_events_label.modulate = Color(0.7, 0.7, 0.7)
+		event_container.add_child(no_events_label)
+	else:
+		for event in active_events:
+			var event_item = _create_event_item(event)
+			event_container.add_child(event_item)
+
+func _create_event_item(event: Dictionary) -> Control:
+	var container = VBoxContainer.new()
+	container.add_theme_constant_override("separation", 8)
+	
+	# Event header
+	var header_container = HBoxContainer.new()
+	
+	var name_label = Label.new()
+	name_label.text = event["name"]
+	name_label.add_theme_font_size_override("font_size", 13)
+	
+	# Color code by severity
+	match event["severity"]:
+		"beneficial":
+			name_label.modulate = Color.GREEN
+		"harmful":
+			name_label.modulate = Color.ORANGE_RED
+		"dangerous":
+			name_label.modulate = Color.RED
+		"moderate":
+			name_label.modulate = Color.YELLOW
+		_:
+			name_label.modulate = Color.WHITE
+	
+	var remaining_time = event["remaining_time"]
+	var time_label = Label.new()
+	var time_minutes = int(remaining_time / 60)
+	var time_seconds = int(remaining_time) % 60
+	time_label.text = str(time_minutes) + "m " + str(time_seconds) + "s"
+	time_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	time_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	time_label.add_theme_font_size_override("font_size", 11)
+	time_label.modulate = Color(0.8, 0.8, 0.8)
+	
+	header_container.add_child(name_label)
+	header_container.add_child(time_label)
+	
+	# Description
+	var description_label = Label.new()
+	description_label.text = event["description"]
+	description_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	description_label.add_theme_font_size_override("font_size", 10)
+	description_label.modulate = Color(0.9, 0.9, 0.9)
+	
+	# Effects summary
+	var effects_label = Label.new()
+	var effects_text = ""
+	for effect_key in event["effects"].keys():
+		var effect_value = event["effects"][effect_key]
+		var effect_description = _format_event_effect(effect_key, effect_value)
+		if effect_description != "":
+			if effects_text != "":
+				effects_text += ", "
+			effects_text += effect_description
+	
+	effects_label.text = "Effects: " + effects_text
+	effects_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	effects_label.add_theme_font_size_override("font_size", 10)
+	effects_label.modulate = Color(0.7, 0.9, 1.0)
+	
+	# Affected systems
+	var systems_label = Label.new()
+	var systems_text = ""
+	var affected_systems = event["affected_systems"]
+	if affected_systems.has("all"):
+		systems_text = "All systems"
+	else:
+		for system_id in affected_systems:
+			var system_data = game_manager.economy_system.get_system_data(system_id)
+			if systems_text != "":
+				systems_text += ", "
+			systems_text += system_data["name"]
+	
+	systems_label.text = "Systems: " + systems_text
+	systems_label.add_theme_font_size_override("font_size", 10)
+	systems_label.modulate = Color(0.8, 0.8, 0.8)
+	
+	# Add components
+	container.add_child(header_container)
+	container.add_child(description_label)
+	container.add_child(effects_label)
+	container.add_child(systems_label)
+	
+	# Add separator
+	var separator = HSeparator.new()
+	separator.modulate = Color(0.5, 0.5, 0.5)
+	container.add_child(separator)
+	
+	return container
+
+func _format_event_effect(effect_key: String, effect_value) -> String:
+	match effect_key:
+		"fuel_cost_multiplier":
+			if effect_value > 1.0:
+				return "Fuel costs +" + str(int((effect_value - 1.0) * 100)) + "%"
+			else:
+				return "Fuel costs -" + str(int((1.0 - effect_value) * 100)) + "%"
+		"scanner_efficiency":
+			if effect_value > 1.0:
+				return "Scanner efficiency +" + str(int((effect_value - 1.0) * 100)) + "%"
+			else:
+				return "Scanner efficiency -" + str(int((1.0 - effect_value) * 100)) + "%"
+		"profit_multiplier":
+			if effect_value > 1.0:
+				return "Trade profits +" + str(int((effect_value - 1.0) * 100)) + "%"
+			else:
+				return "Trade profits -" + str(int((1.0 - effect_value) * 100)) + "%"
+		"price_multiplier":
+			if effect_value > 1.0:
+				return "Prices +" + str(int((effect_value - 1.0) * 100)) + "%"
+			else:
+				return "Prices -" + str(int((1.0 - effect_value) * 100)) + "%"
+		"price_volatility":
+			return "Price volatility +" + str(int((effect_value - 1.0) * 100)) + "%"
+		"artifact_discovery_bonus":
+			return "Artifact discovery +" + str(int(effect_value * 100)) + "%"
+		"cargo_loss_risk":
+			return "Cargo loss risk " + str(int(effect_value * 100)) + "%"
+		"travel_danger":
+			return "Travel danger +" + str(int((effect_value - 1.0) * 100)) + "%"
+		"specific_goods":
+			return "Affects " + ", ".join(effect_value)
+		_:
+			return ""

@@ -242,6 +242,86 @@ layout_mode = 2
 layout_mode = 2
 size_flags_horizontal = 3
 
+[node name="EventPanel" type="Panel" parent="MainUI/GameArea/Panels"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MainUI/GameArea/Panels/EventPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="EventTitle" type="Label" parent="MainUI/GameArea/Panels/EventPanel/VBoxContainer"]
+layout_mode = 2
+text = "Active Events"
+
+[node name="EventContainer" type="VBoxContainer" parent="MainUI/GameArea/Panels/EventPanel/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="EventNotification" type="AcceptDialog" parent="MainUI"]
+title = "Galactic Event!"
+initial_position = 1
+size = Vector2i(450, 350)
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MainUI/EventNotification"]
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 442.0
+offset_bottom = 301.0
+
+[node name="EventName" type="Label" parent="MainUI/EventNotification/VBoxContainer"]
+layout_mode = 2
+text = "Event Name"
+horizontal_alignment = 1
+
+[node name="EventDescription" type="Label" parent="MainUI/EventNotification/VBoxContainer"]
+layout_mode = 2
+text = "Event description goes here..."
+autowrap_mode = 2
+
+[node name="HSeparator" type="HSeparator" parent="MainUI/EventNotification/VBoxContainer"]
+layout_mode = 2
+
+[node name="EffectsTitle" type="Label" parent="MainUI/EventNotification/VBoxContainer"]
+layout_mode = 2
+text = "Event Effects:"
+
+[node name="EffectsText" type="Label" parent="MainUI/EventNotification/VBoxContainer"]
+layout_mode = 2
+text = "Effects go here..."
+autowrap_mode = 2
+
+[node name="HSeparator2" type="HSeparator" parent="MainUI/EventNotification/VBoxContainer"]
+layout_mode = 2
+
+[node name="DurationTitle" type="Label" parent="MainUI/EventNotification/VBoxContainer"]
+layout_mode = 2
+text = "Duration:"
+
+[node name="DurationText" type="Label" parent="MainUI/EventNotification/VBoxContainer"]
+layout_mode = 2
+text = "Duration info goes here..."
+
+[node name="HSeparator3" type="HSeparator" parent="MainUI/EventNotification/VBoxContainer"]
+layout_mode = 2
+
+[node name="SystemsTitle" type="Label" parent="MainUI/EventNotification/VBoxContainer"]
+layout_mode = 2
+text = "Affected Systems:"
+
+[node name="SystemsText" type="Label" parent="MainUI/EventNotification/VBoxContainer"]
+layout_mode = 2
+text = "Systems go here..."
+autowrap_mode = 2
+
 [node name="ArtifactNotification" type="AcceptDialog" parent="MainUI"]
 title = "Artifact Discovered!"
 initial_position = 1
