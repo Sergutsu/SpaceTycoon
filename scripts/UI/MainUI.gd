@@ -1149,6 +1149,7 @@ func _create_trading_post_creation_interface(system_id: String) -> Control:
 		
 		# Cargo allocation slider
 		var cargo_container = HBoxContainer.new()
+		@warning_ignore("shadowed_variable")
 		var cargo_label = Label.new()
 		cargo_label.text = "Cargo Allocation: "
 		cargo_label.custom_minimum_size.x = 120

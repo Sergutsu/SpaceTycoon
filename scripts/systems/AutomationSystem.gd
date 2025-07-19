@@ -380,6 +380,7 @@ func get_system_trading_recommendations(system_id: String) -> Dictionary:
 		
 		if average_price > 0:
 			var volatility = market_data.get("volatility", 0.1)
+			@warning_ignore("unused_variable")
 			var current_ratio = market_data["current_price"] / average_price
 			
 			var recommendation = {

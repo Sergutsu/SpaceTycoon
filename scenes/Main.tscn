@@ -176,9 +176,9 @@ layout_mode = 2
 size_flags_vertical = 3
 
 [node name="UpgradePanel" type="Panel" parent="MainUI/GameArea/Panels"]
+visible = false
 layout_mode = 2
 size_flags_vertical = 3
-visible = false
 
 [node name="VBoxContainer" type="VBoxContainer" parent="MainUI/GameArea/Panels/UpgradePanel"]
 layout_mode = 1
@@ -227,16 +227,20 @@ text = "Artifacts & Lore"
 [node name="TabContainer" type="TabContainer" parent="MainUI/GameArea/Panels/ArtifactPanel/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
+current_tab = 0
 
 [node name="Artifacts" type="ScrollContainer" parent="MainUI/GameArea/Panels/ArtifactPanel/VBoxContainer/TabContainer"]
 layout_mode = 2
+metadata/_tab_index = 0
 
 [node name="ArtifactContainer" type="VBoxContainer" parent="MainUI/GameArea/Panels/ArtifactPanel/VBoxContainer/TabContainer/Artifacts"]
 layout_mode = 2
 size_flags_horizontal = 3
 
 [node name="Lore" type="ScrollContainer" parent="MainUI/GameArea/Panels/ArtifactPanel/VBoxContainer/TabContainer"]
+visible = false
 layout_mode = 2
+metadata/_tab_index = 1
 
 [node name="LoreContainer" type="VBoxContainer" parent="MainUI/GameArea/Panels/ArtifactPanel/VBoxContainer/TabContainer/Lore"]
 layout_mode = 2
@@ -267,9 +271,9 @@ layout_mode = 2
 size_flags_vertical = 3
 
 [node name="AutomationPanel" type="Panel" parent="MainUI/GameArea/Panels"]
+visible = false
 layout_mode = 2
 size_flags_vertical = 3
-visible = false
 
 [node name="VBoxContainer" type="VBoxContainer" parent="MainUI/GameArea/Panels/AutomationPanel"]
 layout_mode = 1
@@ -290,16 +294,20 @@ text = "Trading Post Automation"
 [node name="TabContainer" type="TabContainer" parent="MainUI/GameArea/Panels/AutomationPanel/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
+current_tab = 0
 
 [node name="Overview" type="ScrollContainer" parent="MainUI/GameArea/Panels/AutomationPanel/VBoxContainer/TabContainer"]
 layout_mode = 2
+metadata/_tab_index = 0
 
 [node name="OverviewContainer" type="VBoxContainer" parent="MainUI/GameArea/Panels/AutomationPanel/VBoxContainer/TabContainer/Overview"]
 layout_mode = 2
 size_flags_horizontal = 3
 
 [node name="Management" type="ScrollContainer" parent="MainUI/GameArea/Panels/AutomationPanel/VBoxContainer/TabContainer"]
+visible = false
 layout_mode = 2
+metadata/_tab_index = 1
 
 [node name="ManagementContainer" type="VBoxContainer" parent="MainUI/GameArea/Panels/AutomationPanel/VBoxContainer/TabContainer/Management"]
 layout_mode = 2
