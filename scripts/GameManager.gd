@@ -16,6 +16,7 @@ signal player_data_updated(data: Dictionary)
 @onready var automation_system: AutomationSystem
 @onready var event_system: EventSystem
 @onready var progression_system: ProgressionSystem
+@onready var save_system: SaveSystem
 
 # Enhanced player data structure
 var player_data: Dictionary = {
@@ -91,23 +92,19 @@ func _ready():
 	_initialize_systems()
 	_connect_system_signals()
 	
-	# Initialize game state
-	player_data.created_at = Time.get_unix_time_from_system()
-	player_data.last_played = Time.get_unix_time_from_system()
-	
-	# Initialize artifacts if any are already collected
-	_initialize_collected_artifacts()
-	
-	# Initialize progression system
-	progression_system.initialize_progression(player_data)
+	# Try to load existing save file, otherwise initialize new game
+	if save_system.has_save_file():
+		print("Save file found, loading game...")
+		var load_success = save_system.load_game()
+		if not load_success:
+			print("Failed to load save file, starting new game")
+			_initialize_new_game()
+	else:
+		print("No save file found, starting new game")
+		_initialize_new_game()
 	
 	# Emit initial state signals
-	credits_changed.emit(player_data.credits)
-	fuel_changed.emit(player_data.ship.current_fuel)
-	cargo_changed.emit(player_data.inventory)
-	location_changed.emit(player_data.current_system)
-	ship_stats_updated.emit(_get_current_ship_stats())
-	player_data_updated.emit(player_data)
+	_emit_initial_state_signals()
 
 func _initialize_systems():
 	# Create system instances
@@ -117,6 +114,7 @@ func _initialize_systems():
 	automation_system = AutomationSystem.new()
 	event_system = EventSystem.new()
 	progression_system = ProgressionSystem.new()
+	save_system = SaveSystem.new()
 	
 	# Add systems as children
 	add_child(economy_system)
@@ -125,6 +123,7 @@ func _initialize_systems():
 	add_child(automation_system)
 	add_child(event_system)
 	add_child(progression_system)
+	add_child(save_system)
 
 func _connect_system_signals():
 	# Connect economy system signals
@@ -151,6 +150,11 @@ func _connect_system_signals():
 	# Connect progression system signals
 	progression_system.achievement_unlocked.connect(_on_achievement_unlocked)
 	progression_system.milestone_reached.connect(_on_milestone_reached)
+	
+	# Connect save system signals
+	save_system.save_completed.connect(_on_save_completed)
+	save_system.load_completed.connect(_on_load_completed)
+	save_system.auto_save_triggered.connect(_on_auto_save_triggered)
 
 # Core game functions using new systems
 
@@ -515,33 +519,7 @@ func _on_precursor_lore_unlocked(civilization: String, lore_text: String):
 	
 	progression_system.update_statistic("precursor_civilizations_discovered", discovered_count, false)
 
-# Save/Load functions for progression system
-func save_game_data() -> Dictionary:
-	var save_data = {
-		"player_data": player_data,
-		"progression_data": progression_system.get_save_data() if progression_system else {}
-	}
-	return save_data
 
-func load_game_data(save_data: Dictionary):
-	if save_data.has("player_data"):
-		player_data = save_data["player_data"]
-	
-	if save_data.has("progression_data") and progression_system:
-		progression_system.load_save_data(save_data["progression_data"])
-	
-	# Re-initialize systems with loaded data
-	_initialize_collected_artifacts()
-	if progression_system:
-		progression_system.initialize_progression(player_data)
-	
-	# Emit updated signals
-	credits_changed.emit(player_data.credits)
-	fuel_changed.emit(player_data.ship.current_fuel)
-	cargo_changed.emit(player_data.inventory)
-	location_changed.emit(player_data.current_system)
-	ship_stats_updated.emit(_get_current_ship_stats())
-	player_data_updated.emit(player_data)
 
 func _on_trading_post_created(system_id: String, config: Dictionary):
 	# Trading post created
@@ -613,6 +591,62 @@ func get_next_goals() -> Array:
 
 func get_achievement_rewards() -> Dictionary:
 	return progression_system.get_achievement_rewards()
+
+# Initialize new game state
+func _initialize_new_game():
+	# Initialize game state
+	player_data.created_at = Time.get_unix_time_from_system()
+	player_data.last_played = Time.get_unix_time_from_system()
+	
+	# Initialize artifacts if any are already collected
+	_initialize_collected_artifacts()
+	
+	# Initialize progression system
+	progression_system.initialize_progression(player_data)
+
+# Emit initial state signals
+func _emit_initial_state_signals():
+	credits_changed.emit(player_data.credits)
+	fuel_changed.emit(player_data.ship.current_fuel)
+	cargo_changed.emit(player_data.inventory)
+	location_changed.emit(player_data.current_system)
+	ship_stats_updated.emit(_get_current_ship_stats())
+	player_data_updated.emit(player_data)
+
+# Save system signal handlers
+func _on_save_completed(success: bool, message: String):
+	print("Save completed: " + message)
+	# Could emit a signal for UI notification
+
+func _on_load_completed(success: bool, message: String):
+	print("Load completed: " + message)
+	# Could emit a signal for UI notification
+
+func _on_auto_save_triggered():
+	# Auto-save triggered - could show a brief indicator in UI
+	pass
+
+# Public save/load functions for UI
+func save_game() -> bool:
+	return save_system.save_game()
+
+func load_game() -> bool:
+	return save_system.load_game()
+
+func has_save_file() -> bool:
+	return save_system.has_save_file()
+
+func get_save_file_info() -> Dictionary:
+	return save_system.get_save_file_info()
+
+func delete_save_file() -> bool:
+	return save_system.delete_save_file()
+
+func set_auto_save_enabled(enabled: bool):
+	save_system.set_auto_save_enabled(enabled)
+
+func is_auto_save_enabled() -> bool:
+	return save_system.is_auto_save_enabled()
 
 # Update ship upgrade purchase to track statistics
 func _on_upgrade_purchased_with_progression(upgrade_type: String, cost: int):

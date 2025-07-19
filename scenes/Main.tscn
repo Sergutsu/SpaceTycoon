@@ -58,6 +58,18 @@ layout_mode = 2
 size_flags_horizontal = 3
 text = "Space Transport Tycoon"
 
+[node name="SaveLoadButtons" type="HBoxContainer" parent="MainUI/Header/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 0
+
+[node name="SaveButton" type="Button" parent="MainUI/Header/HBoxContainer/SaveLoadButtons"]
+layout_mode = 2
+text = "Save Game"
+
+[node name="LoadButton" type="Button" parent="MainUI/Header/HBoxContainer/SaveLoadButtons"]
+layout_mode = 2
+text = "Load Game"
+
 [node name="Stats" type="HBoxContainer" parent="MainUI/Header/HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3

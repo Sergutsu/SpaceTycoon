@@ -2,6 +2,8 @@ extends Control
 class_name MainUI
 
 # UI References
+@onready var save_button: Button = $Header/HBoxContainer/SaveLoadButtons/SaveButton
+@onready var load_button: Button = $Header/HBoxContainer/SaveLoadButtons/LoadButton
 @onready var credits_label: Label = $Header/HBoxContainer/Stats/CreditsLabel
 @onready var fuel_label: Label = $Header/HBoxContainer/Stats/FuelLabel
 @onready var cargo_label: Label = $Header/HBoxContainer/Stats/CargoLabel
@@ -68,6 +70,13 @@ func _ready():
 	game_manager.automation_system.trading_post_status_updated.connect(_on_trading_post_status_updated)
 	game_manager.automation_system.trading_post_trade_executed.connect(_on_trading_post_trade_executed)
 	
+	# Connect save/load button signals
+	save_button.pressed.connect(_on_save_button_pressed)
+	load_button.pressed.connect(_on_load_button_pressed)
+	
+	# Update load button state based on save file existence
+	_update_save_load_buttons()
+	
 	# Initial UI update
 	_update_location_display()
 	_update_market_display()
@@ -84,6 +93,8 @@ func _process(delta):
 	if event_update_timer >= event_update_interval:
 		event_update_timer = 0.0
 		_update_event_display()
+		# Also update save/load buttons periodically
+		_update_save_load_buttons()
 
 func _on_credits_changed(new_credits: int):
 	var credits_text = "Credits: $" + str(new_credits)
@@ -1430,3 +1441,60 @@ pdate_progression_display():
 	# The progression panel handles its own updates through signals
 	# This function exists for consistency with other display updates
 	pass
+#
+ Save/Load button handlers
+func _on_save_button_pressed():
+	print("Save button pressed")
+	var success = game_manager.save_game()
+	
+	if success:
+		_show_save_notification("Game saved successfully!")
+	else:
+		_show_save_notification("Failed to save game")
+
+func _on_load_button_pressed():
+	print("Load button pressed")
+	var success = game_manager.load_game()
+	
+	if success:
+		_show_save_notification("Game loaded successfully!")
+		# Update all UI displays after loading
+		_update_all_displays()
+	else:
+		_show_save_notification("Failed to load game")
+
+# Update save/load button states
+func _update_save_load_buttons():
+	# Save button is always enabled
+	save_button.disabled = false
+	
+	# Load button is only enabled if save file exists
+	load_button.disabled = not game_manager.has_save_file()
+	
+	# Update button text to show save file info
+	if game_manager.has_save_file():
+		var save_info = game_manager.get_save_file_info()
+		if not save_info.is_empty():
+			load_button.text = "Load Game (" + save_info.get("formatted_date", "Unknown") + ")"
+		else:
+			load_button.text = "Load Game"
+	else:
+		load_button.text = "Load Game (No Save)"
+
+# Show save/load notification
+func _show_save_notification(message: String):
+	# For now, just print to console
+	# In a full implementation, you might want to show a temporary UI notification
+	print("SAVE/LOAD: " + message)
+
+# Update all UI displays (used after loading)
+func _update_all_displays():
+	_update_location_display()
+	_update_market_display()
+	_update_travel_display()
+	_update_upgrade_display()
+	_update_artifact_display()
+	_update_event_display()
+	_update_automation_display()
+	_update_progression_display()
+	_update_save_load_buttons()
