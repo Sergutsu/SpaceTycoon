@@ -18,6 +18,7 @@ class_name MainUI
 @onready var automation_panel: Panel = $GameArea/Panels/AutomationPanel
 @onready var automation_overview_container: VBoxContainer = $GameArea/Panels/AutomationPanel/VBoxContainer/TabContainer/Overview/OverviewContainer
 @onready var automation_management_container: VBoxContainer = $GameArea/Panels/AutomationPanel/VBoxContainer/TabContainer/Management/ManagementContainer
+@onready var progression_panel: Panel = $GameArea/Panels/ProgressionPanel
 @onready var event_notification: AcceptDialog = $EventNotification
 @onready var event_name_label: Label = $EventNotification/VBoxContainer/EventName
 @onready var event_description_label: Label = $EventNotification/VBoxContainer/EventDescription
@@ -75,6 +76,7 @@ func _ready():
 	_update_artifact_display()
 	_update_event_display()
 	_update_automation_display()
+	_update_progression_display()
 
 func _process(delta):
 	# Update event display timer
@@ -1423,3 +1425,8 @@ func _on_remove_trading_post_pressed(system_id: String):
 	if game_manager.automation_system.remove_trading_post(system_id):
 		_update_automation_display()
 		print("Trading post removed")
+func _u
+pdate_progression_display():
+	# The progression panel handles its own updates through signals
+	# This function exists for consistency with other display updates
+	pass

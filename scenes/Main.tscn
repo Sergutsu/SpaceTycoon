@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://cqnkc5o75nf4y" path="res://scripts/GameManager.gd" id="1_0k8xj"]
 [ext_resource type="Script" uid="uid://hpjxunnrhlpr" path="res://scripts/UI/MainUI.gd" id="2_3h4kl"]
 [ext_resource type="Script" uid="uid://bjtyahncabo27" path="res://scripts/UI/GalaxyMap.gd" id="3_2m5nl"]
+[ext_resource type="Script" path="res://scripts/UI/ProgressionPanel.gd" id="4_5n6op"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -302,6 +303,52 @@ size_flags_horizontal = 3
 layout_mode = 2
 
 [node name="ManagementContainer" type="VBoxContainer" parent="MainUI/GameArea/Panels/AutomationPanel/VBoxContainer/TabContainer/Management"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ProgressionPanel" type="Panel" parent="MainUI/GameArea/Panels"]
+layout_mode = 2
+size_flags_vertical = 3
+script = ExtResource("4_5n6op")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MainUI/GameArea/Panels/ProgressionPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ProgressionTitle" type="Label" parent="MainUI/GameArea/Panels/ProgressionPanel/VBoxContainer"]
+layout_mode = 2
+text = "Player Progression"
+
+[node name="TabContainer" type="TabContainer" parent="MainUI/GameArea/Panels/ProgressionPanel/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Statistics" type="ScrollContainer" parent="MainUI/GameArea/Panels/ProgressionPanel/VBoxContainer/TabContainer"]
+layout_mode = 2
+
+[node name="StatisticsContainer" type="VBoxContainer" parent="MainUI/GameArea/Panels/ProgressionPanel/VBoxContainer/TabContainer/Statistics/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Achievements" type="ScrollContainer" parent="MainUI/GameArea/Panels/ProgressionPanel/VBoxContainer/TabContainer"]
+layout_mode = 2
+
+[node name="AchievementsContainer" type="VBoxContainer" parent="MainUI/GameArea/Panels/ProgressionPanel/VBoxContainer/TabContainer/Achievements/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Goals" type="ScrollContainer" parent="MainUI/GameArea/Panels/ProgressionPanel/VBoxContainer/TabContainer"]
+layout_mode = 2
+
+[node name="GoalsContainer" type="VBoxContainer" parent="MainUI/GameArea/Panels/ProgressionPanel/VBoxContainer/TabContainer/Goals/ScrollContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
 

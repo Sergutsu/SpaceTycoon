@@ -15,6 +15,7 @@ signal player_data_updated(data: Dictionary)
 @onready var artifact_system: ArtifactSystem
 @onready var automation_system: AutomationSystem
 @onready var event_system: EventSystem
+@onready var progression_system: ProgressionSystem
 
 # Enhanced player data structure
 var player_data: Dictionary = {
@@ -97,6 +98,9 @@ func _ready():
 	# Initialize artifacts if any are already collected
 	_initialize_collected_artifacts()
 	
+	# Initialize progression system
+	progression_system.initialize_progression(player_data)
+	
 	# Emit initial state signals
 	credits_changed.emit(player_data.credits)
 	fuel_changed.emit(player_data.ship.current_fuel)
@@ -112,6 +116,7 @@ func _initialize_systems():
 	artifact_system = ArtifactSystem.new()
 	automation_system = AutomationSystem.new()
 	event_system = EventSystem.new()
+	progression_system = ProgressionSystem.new()
 	
 	# Add systems as children
 	add_child(economy_system)
@@ -119,6 +124,7 @@ func _initialize_systems():
 	add_child(artifact_system)
 	add_child(automation_system)
 	add_child(event_system)
+	add_child(progression_system)
 
 func _connect_system_signals():
 	# Connect economy system signals
@@ -141,6 +147,10 @@ func _connect_system_signals():
 	# Connect event system signals
 	event_system.event_triggered.connect(_on_event_triggered)
 	event_system.event_expired.connect(_on_event_expired)
+	
+	# Connect progression system signals
+	progression_system.achievement_unlocked.connect(_on_achievement_unlocked)
+	progression_system.milestone_reached.connect(_on_milestone_reached)
 
 # Core game functions using new systems
 
@@ -181,6 +191,11 @@ func buy_good(good_type: String, quantity: int = 1) -> Dictionary:
 	# Update statistics
 	player_data.statistics.trades_completed += 1
 	player_data.statistics.total_credits_earned -= total_cost  # Negative for purchases
+	player_data.statistics.cargo_transported += quantity
+	
+	# Update progression system statistics
+	progression_system.update_statistic("trades_completed", 1)
+	progression_system.update_statistic("cargo_transported", quantity)
 	
 	# Execute trade in economy system
 	economy_system.execute_trade(current_system, good_type, quantity, true)
@@ -219,6 +234,12 @@ func sell_good(good_type: String, quantity: int = 1) -> Dictionary:
 	# Update statistics
 	player_data.statistics.trades_completed += 1
 	player_data.statistics.total_credits_earned += total_revenue
+	player_data.statistics.cargo_transported += quantity
+	
+	# Update progression system statistics
+	progression_system.update_statistic("trades_completed", 1)
+	progression_system.update_statistic("total_credits_earned", total_revenue)
+	progression_system.update_statistic("cargo_transported", quantity)
 	
 	# Execute trade in economy system
 	economy_system.execute_trade(current_system, good_type, quantity, false)
@@ -252,9 +273,16 @@ func travel_to_system(system_id: String) -> Dictionary:
 	
 	# Update statistics
 	player_data.statistics.distance_traveled += fuel_cost
+	player_data.statistics.fuel_consumed += final_fuel_cost
+	
+	# Update progression system statistics
+	progression_system.update_statistic("distance_traveled", fuel_cost)
+	progression_system.update_statistic("fuel_consumed", final_fuel_cost)
+	
 	if not player_data.systems_visited.has(system_id):
 		player_data.systems_visited.append(system_id)
 		player_data.statistics.systems_explored += 1
+		progression_system.update_statistic("systems_explored", 1)
 	
 	# Attempt artifact discovery
 	_attempt_artifact_discovery(system_id)
@@ -381,6 +409,14 @@ func _attempt_artifact_discovery(system_id: String):
 			player_data.artifacts.append(discovery_result.artifact_id)
 			player_data.statistics.artifacts_found += 1
 			
+			# Update progression system statistics
+			progression_system.update_statistic("artifacts_found", 1)
+			
+			# Check if this is a rare artifact
+			var artifact_data = artifact_system._find_artifact_by_id(discovery_result.artifact_id)
+			if not artifact_data.is_empty() and artifact_data.get("rarity", "common") == "rare":
+				progression_system.update_statistic("rare_artifacts_found", 1)
+			
 			# Update ship bonuses from artifact effects
 			_apply_artifact_bonuses()
 
@@ -451,6 +487,9 @@ func _on_upgrade_purchased(upgrade_type: String, cost: int):
 	# Upgrade purchased - deduct credits
 	player_data.credits -= cost
 	credits_changed.emit(player_data.credits)
+	
+	# Update progression statistics
+	progression_system.update_statistic("upgrades_purchased", 1)
 
 @warning_ignore("unused_parameter")
 func _on_artifact_discovered(artifact_id: String, system_id: String, lore_fragment: String):
@@ -467,10 +506,49 @@ func _on_precursor_lore_unlocked(civilization: String, lore_text: String):
 	# New precursor lore unlocked
 	player_data.precursor_lore[civilization]["discovered"] = true
 	player_data.precursor_lore[civilization]["lore_fragments"] += 1
+	
+	# Update progression statistics
+	var discovered_count = 0
+	for civ in player_data.precursor_lore.keys():
+		if player_data.precursor_lore[civ]["discovered"]:
+			discovered_count += 1
+	
+	progression_system.update_statistic("precursor_civilizations_discovered", discovered_count, false)
+
+# Save/Load functions for progression system
+func save_game_data() -> Dictionary:
+	var save_data = {
+		"player_data": player_data,
+		"progression_data": progression_system.get_save_data() if progression_system else {}
+	}
+	return save_data
+
+func load_game_data(save_data: Dictionary):
+	if save_data.has("player_data"):
+		player_data = save_data["player_data"]
+	
+	if save_data.has("progression_data") and progression_system:
+		progression_system.load_save_data(save_data["progression_data"])
+	
+	# Re-initialize systems with loaded data
+	_initialize_collected_artifacts()
+	if progression_system:
+		progression_system.initialize_progression(player_data)
+	
+	# Emit updated signals
+	credits_changed.emit(player_data.credits)
+	fuel_changed.emit(player_data.ship.current_fuel)
+	cargo_changed.emit(player_data.inventory)
+	location_changed.emit(player_data.current_system)
+	ship_stats_updated.emit(_get_current_ship_stats())
+	player_data_updated.emit(player_data)
 
 func _on_trading_post_created(system_id: String, config: Dictionary):
 	# Trading post created
 	player_data.trading_posts[system_id] = config
+	
+	# Update progression statistics
+	progression_system.update_statistic("trading_posts_created", 1)
 
 @warning_ignore("unused_parameter")
 func _on_automation_profit_generated(amount: int, source: String):
@@ -478,6 +556,11 @@ func _on_automation_profit_generated(amount: int, source: String):
 	player_data.credits += amount
 	player_data.automation_profits += amount
 	player_data.statistics.total_credits_earned += amount
+	
+	# Update progression statistics
+	progression_system.update_statistic("automation_profits_earned", amount)
+	progression_system.update_statistic("total_credits_earned", amount)
+	
 	credits_changed.emit(player_data.credits)
 
 @warning_ignore("unused_parameter")
@@ -489,3 +572,53 @@ func _on_event_triggered(event_type: String, duration: float, effects: Dictionar
 func _on_event_expired(event_type: String):
 	# Dynamic event expired
 	pass
+
+# Progression system signal handlers
+func _on_achievement_unlocked(achievement_id: String, achievement_data: Dictionary):
+	# Apply achievement rewards
+	var reward_type = achievement_data["reward_type"]
+	var reward_value = achievement_data["reward_value"]
+	
+	match reward_type:
+		"credits":
+			player_data.credits += reward_value
+			credits_changed.emit(player_data.credits)
+		"fuel_efficiency", "trade_bonus", "scanner_bonus", "discovery_bonus", "global_efficiency", "travel_speed", "automation_efficiency", "upgrade_discount":
+			# These bonuses are handled by getting achievement rewards when needed
+			pass
+	
+	# Update player data
+	if not player_data.achievements_unlocked.has(achievement_id):
+		player_data.achievements_unlocked.append(achievement_id)
+	
+	player_data_updated.emit(player_data)
+
+@warning_ignore("unused_parameter")
+func _on_milestone_reached(milestone_id: String, milestone_data: Dictionary):
+	# Milestone reached - could trigger UI notifications
+	pass
+
+# Progression system access functions
+func get_achievement_progress() -> Dictionary:
+	return progression_system.get_achievement_progress()
+
+func get_milestone_progress() -> Dictionary:
+	return progression_system.get_milestone_progress()
+
+func get_statistics_display() -> Dictionary:
+	return progression_system.get_statistics_display()
+
+func get_next_goals() -> Array:
+	return progression_system.get_next_goals()
+
+func get_achievement_rewards() -> Dictionary:
+	return progression_system.get_achievement_rewards()
+
+# Update ship upgrade purchase to track statistics
+func _on_upgrade_purchased_with_progression(upgrade_type: String, cost: int):
+	# Original upgrade purchased logic
+	player_data.credits -= cost
+	credits_changed.emit(player_data.credits)
+	
+	# Update progression statistics
+	progression_system.update_statistic("upgrades_purchased", 1)
