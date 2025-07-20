@@ -6,6 +6,7 @@ const ORBIT_SENSITIVITY: float = 0.005
 const ZOOM_SENSITIVITY: float = 0.5
 const PAN_SENSITIVITY: float = 0.01
 const SMOOTH_FACTOR: float = 10.0
+const TWEEN_DURATION: float = 0.8
 
 # Camera bounds
 const MIN_DISTANCE: float = 5.0
@@ -28,6 +29,13 @@ var is_panning: bool = false
 var last_mouse_position: Vector2
 var mouse_delta: Vector2
 
+# Smooth transition system
+var camera_tween: Tween
+var is_tweening: bool = false
+
+# Performance optimization
+var _frame_count: int = 0
+
 # Planet bounds for camera limiting
 var planet_bounds: AABB
 var galaxy_controller: Galaxy3DController
@@ -44,6 +52,11 @@ func _ready():
 	
 	# Calculate initial planet bounds
 	call_deferred("_calculate_planet_bounds")
+	
+	# Create tween for smooth transitions
+	camera_tween = create_tween()
+	camera_tween.set_loops(0)
+	camera_tween.finished.connect(_on_tween_finished)
 
 func _input(event: InputEvent):
 	if event is InputEventMouseButton:
@@ -52,23 +65,47 @@ func _input(event: InputEvent):
 		_handle_mouse_motion(event)
 
 func _process(delta: float):
-	# Smooth camera movement
-	_smooth_camera_movement(delta)
+	# Only apply manual smoothing if not tweening
+	if not is_tweening:
+		# Smooth camera movement
+		_smooth_camera_movement(delta)
 	
 	# Update camera position based on orbit parameters
 	_update_camera_position()
+	
+	# Periodic performance optimization
+	_frame_count += 1
+	if _frame_count % 60 == 0:  # Every 60 frames (1 second at 60fps)
+		_optimize_camera_performance()
+
+func _optimize_camera_performance():
+	"""Optimize camera performance periodically"""
+	if galaxy_controller:
+		galaxy_controller.optimize_for_performance()
 
 func _handle_mouse_button(event: InputEventMouseButton):
 	"""Handle mouse button events for camera controls"""
 	match event.button_index:
 		MOUSE_BUTTON_LEFT:
 			if event.pressed:
-				is_orbiting = true
+				# Check for modifier keys for panning
+				if Input.is_key_pressed(KEY_SHIFT) or Input.is_key_pressed(KEY_CTRL):
+					is_panning = true
+				else:
+					is_orbiting = true
 				last_mouse_position = event.position
 			else:
 				is_orbiting = false
+				is_panning = false
 		
 		MOUSE_BUTTON_MIDDLE:
+			if event.pressed:
+				is_panning = true
+				last_mouse_position = event.position
+			else:
+				is_panning = false
+		
+		MOUSE_BUTTON_RIGHT:
 			if event.pressed:
 				is_panning = true
 				last_mouse_position = event.position
@@ -184,17 +221,25 @@ func _clamp_orbit_center():
 		orbit_center.z = clamp(orbit_center.z, planet_bounds.position.z, planet_bounds.end.z)
 
 # Public API methods
-func focus_on_planet(planet_position: Vector3, distance: float = 8.0):
+func focus_on_planet(planet_position: Vector3, distance: float = 8.0, use_smooth_transition: bool = true):
 	"""Focus camera on a specific planet"""
-	orbit_center = planet_position
-	target_distance = clamp(distance, MIN_DISTANCE, MAX_DISTANCE)
+	var new_distance = clamp(distance, MIN_DISTANCE, MAX_DISTANCE)
+	
+	if use_smooth_transition:
+		_smooth_transition_to(planet_position, new_distance, 0.0, 30.0)
+	else:
+		orbit_center = planet_position
+		target_distance = new_distance
 
-func focus_on_galaxy_center():
+func focus_on_galaxy_center(use_smooth_transition: bool = true):
 	"""Reset camera to focus on galaxy center"""
-	orbit_center = Vector3.ZERO
-	target_distance = 15.0
-	target_azimuth = 0.0
-	target_elevation = 30.0
+	if use_smooth_transition:
+		_smooth_transition_to(Vector3.ZERO, 15.0, 0.0, 30.0)
+	else:
+		orbit_center = Vector3.ZERO
+		target_distance = 15.0
+		target_azimuth = 0.0
+		target_elevation = 30.0
 
 func set_orbit_sensitivity(sensitivity: float):
 	"""Set orbit sensitivity (for settings/preferences)"""
@@ -215,3 +260,97 @@ func get_camera_info() -> Dictionary:
 func refresh_bounds():
 	"""Refresh planet bounds calculation"""
 	_calculate_planet_bounds()
+
+# Smooth transition methods
+func _smooth_transition_to(new_center: Vector3, new_distance: float, new_azimuth: float, new_elevation: float):
+	"""Create smooth transition to new camera position"""
+	if camera_tween:
+		camera_tween.kill()
+	
+	camera_tween = create_tween()
+	camera_tween.set_parallel(true)
+	is_tweening = true
+	
+	# Tween orbit center
+	camera_tween.tween_method(_set_orbit_center, orbit_center, new_center, TWEEN_DURATION)
+	
+	# Tween distance
+	camera_tween.tween_method(_set_target_distance, current_distance, new_distance, TWEEN_DURATION)
+	
+	# Tween azimuth (handle angle wrapping)
+	var azimuth_diff = _angle_difference(current_azimuth, new_azimuth)
+	var target_azimuth_unwrapped = current_azimuth + azimuth_diff
+	camera_tween.tween_method(_set_target_azimuth, current_azimuth, target_azimuth_unwrapped, TWEEN_DURATION)
+	
+	# Tween elevation
+	camera_tween.tween_method(_set_target_elevation, current_elevation, new_elevation, TWEEN_DURATION)
+	
+	# Set easing for smooth feel
+	camera_tween.set_ease(Tween.EASE_OUT)
+	camera_tween.set_trans(Tween.TRANS_CUBIC)
+
+func _set_orbit_center(center: Vector3):
+	"""Tween callback for orbit center"""
+	orbit_center = center
+
+func _set_target_distance(distance: float):
+	"""Tween callback for distance"""
+	current_distance = distance
+	target_distance = distance
+
+func _set_target_azimuth(azimuth: float):
+	"""Tween callback for azimuth"""
+	current_azimuth = azimuth
+	target_azimuth = azimuth
+
+func _set_target_elevation(elevation: float):
+	"""Tween callback for elevation"""
+	current_elevation = elevation
+	target_elevation = elevation
+
+func _angle_difference(from_angle: float, to_angle: float) -> float:
+	"""Calculate shortest angle difference"""
+	var diff = fmod(to_angle - from_angle, TAU)
+	if diff > PI:
+		diff -= TAU
+	elif diff < -PI:
+		diff += TAU
+	return diff
+
+func _on_tween_finished():
+	"""Called when tween animation completes"""
+	is_tweening = false
+
+# Enhanced camera control methods
+func smooth_zoom_to(new_distance: float):
+	"""Smoothly zoom to specific distance"""
+	var clamped_distance = clamp(new_distance, MIN_DISTANCE, MAX_DISTANCE)
+	if camera_tween:
+		camera_tween.kill()
+	
+	camera_tween = create_tween()
+	is_tweening = true
+	camera_tween.tween_method(_set_target_distance, current_distance, clamped_distance, TWEEN_DURATION * 0.5)
+	camera_tween.set_ease(Tween.EASE_OUT)
+	camera_tween.set_trans(Tween.TRANS_QUAD)
+
+func smooth_orbit_to(new_azimuth: float, new_elevation: float):
+	"""Smoothly orbit to specific angles"""
+	var clamped_elevation = clamp(new_elevation, MIN_ELEVATION, MAX_ELEVATION)
+	
+	if camera_tween:
+		camera_tween.kill()
+	
+	camera_tween = create_tween()
+	camera_tween.set_parallel(true)
+	is_tweening = true
+	
+	# Handle azimuth wrapping
+	var azimuth_diff = _angle_difference(current_azimuth, new_azimuth)
+	var target_azimuth_unwrapped = current_azimuth + azimuth_diff
+	
+	camera_tween.tween_method(_set_target_azimuth, current_azimuth, target_azimuth_unwrapped, TWEEN_DURATION * 0.7)
+	camera_tween.tween_method(_set_target_elevation, current_elevation, clamped_elevation, TWEEN_DURATION * 0.7)
+	
+	camera_tween.set_ease(Tween.EASE_OUT)
+	camera_tween.set_trans(Tween.TRANS_CUBIC)

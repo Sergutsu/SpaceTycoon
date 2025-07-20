@@ -6,6 +6,7 @@ signal credits_changed(new_credits: int)
 signal fuel_changed(new_fuel: int)
 signal cargo_changed(cargo_dict: Dictionary)
 signal location_changed(system_id: String)
+signal travel_started(from_system: String, to_system: String)
 signal ship_stats_updated(stats: Dictionary)
 signal player_data_updated(data: Dictionary)
 
@@ -247,7 +248,12 @@ func travel_to_system(system_id: String) -> Dictionary:
 		return {"success": false, "error": "Insufficient fuel"}
 	
 	# Execute travel
+	var from_system = player_data.current_system
 	player_data.ship.current_fuel -= final_fuel_cost
+	
+	# Emit travel started signal before changing location
+	travel_started.emit(from_system, system_id)
+	
 	player_data.current_system = system_id
 	
 	# Update statistics

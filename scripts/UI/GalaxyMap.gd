@@ -65,17 +65,54 @@ func _ready():
 func _initialize_3d_viewport():
 	# Get 3D viewport reference
 	galaxy_3d_viewport = get_node("Galaxy3DViewport")
+	
+	if not galaxy_3d_viewport:
+		_fallback_to_2d("Galaxy3DViewport node not found")
+		return
+	
 	galaxy_3d_scene = galaxy_3d_viewport.get_node("Galaxy3DScene")
 	
-	if galaxy_3d_viewport and galaxy_3d_scene:
-		use_3d_mode = true
-		# Connect to resize events to update viewport size
-		resized.connect(_on_galaxy_map_resized)
-		# Set initial viewport size
-		_update_viewport_size()
-	else:
-		use_3d_mode = false
-		print("3D Galaxy view failed to initialize, falling back to 2D mode")
+	if not galaxy_3d_scene:
+		_fallback_to_2d("Galaxy3DScene node not found")
+		return
+	
+	# Test 3D rendering capability
+	if not _test_3d_rendering():
+		_fallback_to_2d("3D rendering test failed")
+		return
+	
+	use_3d_mode = true
+	# Connect to resize events to update viewport size
+	resized.connect(_on_galaxy_map_resized)
+	# Set initial viewport size
+	_update_viewport_size()
+	print("GalaxyMap: 3D mode initialized successfully")
+
+func _test_3d_rendering() -> bool:
+	"""Test if 3D rendering is working properly"""
+	# Basic test - check if we can access 3D nodes
+	if not galaxy_3d_viewport or not galaxy_3d_scene:
+		return false
+	
+	# Check if viewport can render
+	var viewport_size = galaxy_3d_viewport.get_size()
+	if viewport_size.x <= 0 or viewport_size.y <= 0:
+		return false
+	
+	# Additional checks could be added here for GPU capabilities
+	return true
+
+func _fallback_to_2d(reason: String):
+	"""Fallback to 2D mode with error handling"""
+	use_3d_mode = false
+	print("GalaxyMap: Falling back to 2D mode - ", reason)
+	
+	# Hide 3D viewport if it exists
+	if galaxy_3d_viewport:
+		galaxy_3d_viewport.visible = false
+	
+	# Show user notification
+	_show_3d_fallback_notification(reason)
 
 func _update_viewport_size():
 	if galaxy_3d_viewport and use_3d_mode:
@@ -385,6 +422,9 @@ func _on_ship_movement_complete():
 # 3D Galaxy interaction handlers
 func _on_3d_planet_selected(system_id: String):
 	"""Handle planet selection from 3D galaxy view"""
+	# Update UI to show selected system information
+	_update_ui_for_selected_system(system_id)
+	
 	if system_id != current_system_id:
 		# Get travel cost and check if we can travel
 		var destinations = game_manager.get_available_destinations()
@@ -410,3 +450,47 @@ func _on_3d_planet_hovered(system_id: String):
 func _on_3d_planet_unhovered(_system_id: String):
 	"""Handle planet unhover from 3D galaxy view"""
 	_hide_tooltip()
+
+func _update_ui_for_selected_system(system_id: String):
+	"""Update UI panels to show information for selected system"""
+	# This method ensures UI panels update when a planet is selected in 3D
+	# The actual panel updates are handled by MainUI through GameManager signals
+	# This is a placeholder for any additional 3D-specific UI updates
+	
+	# Could emit a custom signal here if needed for specific 3D UI updates
+	print("GalaxyMap: System selected in 3D view - ", system_id)
+
+func _show_3d_fallback_notification(reason: String):
+	"""Show notification about 3D fallback"""
+	# Create a simple notification
+	var notification = AcceptDialog.new()
+	notification.title = "3D View Unavailable"
+	notification.dialog_text = "3D galaxy view is not available (" + reason + ").\nUsing 2D view instead."
+	notification.initial_position = Window.WINDOW_INITIAL_POSITION_CENTER_PRIMARY_SCREEN
+	
+	# Add to scene temporarily
+	add_child(notification)
+	notification.popup_centered()
+	
+	# Auto-remove after user closes
+	notification.confirmed.connect(func(): notification.queue_free())
+	notification.canceled.connect(func(): notification.queue_free())
+
+func get_3d_status() -> Dictionary:
+	"""Get current 3D view status"""
+	return {
+		"is_3d_mode": use_3d_mode,
+		"viewport_available": galaxy_3d_viewport != null,
+		"scene_available": galaxy_3d_scene != null,
+		"viewport_size": galaxy_3d_viewport.get_size() if galaxy_3d_viewport else Vector2.ZERO
+	}
+
+func force_2d_mode():
+	"""Force fallback to 2D mode (for testing or user preference)"""
+	_fallback_to_2d("User requested 2D mode")
+
+func attempt_3d_reinitialization():
+	"""Attempt to reinitialize 3D mode"""
+	if not use_3d_mode:
+		print("GalaxyMap: Attempting 3D reinitialization...")
+		_initialize_3d_viewport()
