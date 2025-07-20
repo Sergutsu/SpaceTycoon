@@ -4,12 +4,19 @@ class_name GalaxyMap
 # Game Manager reference
 var game_manager: GameManager
 
-# Visual elements
+# 3D Viewport reference
+var galaxy_3d_viewport: SubViewport
+var galaxy_3d_scene: Node3D
+
+# Visual elements (for 2D fallback)
 var system_nodes: Dictionary = {}
 var ship_node: Control
 var current_system_id: String = "terra_prime"
 var tooltip_panel: Panel
 var tooltip_label: Label
+
+# 3D mode flag
+var use_3d_mode: bool = true
 
 # System colors based on type and risk level
 var system_colors: Dictionary = {
@@ -38,12 +45,38 @@ func _ready():
 	game_manager.fuel_changed.connect(_on_fuel_changed)
 	game_manager.player_data_updated.connect(_on_player_data_updated)
 	
-	# Create tooltip
+	# Initialize 3D viewport
+	_initialize_3d_viewport()
+	
+	# Create tooltip (for both 2D and 3D modes)
 	_create_tooltip()
 	
-	# Create visual elements
-	_create_systems()
-	_create_ship()
+	# Create visual elements (fallback for 2D mode)
+	if not use_3d_mode:
+		_create_systems()
+		_create_ship()
+
+func _initialize_3d_viewport():
+	# Get 3D viewport reference
+	galaxy_3d_viewport = get_node("Galaxy3DViewport")
+	galaxy_3d_scene = galaxy_3d_viewport.get_node("Galaxy3DScene")
+	
+	if galaxy_3d_viewport and galaxy_3d_scene:
+		use_3d_mode = true
+		# Connect to resize events to update viewport size
+		resized.connect(_on_galaxy_map_resized)
+		# Set initial viewport size
+		_update_viewport_size()
+	else:
+		use_3d_mode = false
+		print("3D Galaxy view failed to initialize, falling back to 2D mode")
+
+func _update_viewport_size():
+	if galaxy_3d_viewport and use_3d_mode:
+		galaxy_3d_viewport.size = Vector2i(int(size.x), int(size.y))
+
+func _on_galaxy_map_resized():
+	_update_viewport_size()
 
 func _create_tooltip():
 	tooltip_panel = Panel.new()

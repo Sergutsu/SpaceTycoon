@@ -1,19 +1,34 @@
 # Implementation Plan
 
-- [ ] 1. Create core 3D scene structure and basic setup
+- [x] 1. Create core 3D scene structure and basic setup
+
+
+
+
+
   - Create Galaxy3DScene.tscn with Node3D root and basic camera setup
   - Add SubViewport to Main.tscn to embed 3D scene within existing 2D UI
   - Implement basic lighting and space environment for 3D scene
   - _Requirements: 1.1, 1.3_
 
-- [ ] 2. Implement Galaxy3DController script for scene management
+- [x] 2. Implement Galaxy3DController script for scene management
+
+
+
+
+
   - Create Galaxy3DController.gd script to manage the 3D galaxy scene
   - Add methods for initializing planets from GameManager data
   - Implement connection to GameManager signals for state updates
   - Add coordinate conversion from 2D galaxy positions to 3D space
   - _Requirements: 1.1, 1.4, 5.4_
 
-- [ ] 3. Create Planet3D component with primitive sphere representation
+- [x] 3. Create Planet3D component with primitive sphere representation
+
+
+
+
+
   - Create Planet3D.gd script extending Node3D for individual planets
   - Implement sphere mesh creation with solid colors (no textures)
   - Add Area3D collision detection for mouse interaction
