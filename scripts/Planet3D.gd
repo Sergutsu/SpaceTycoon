@@ -173,7 +173,7 @@ func _on_mouse_exited():
 	update_visual_state()
 	planet_unhovered.emit(system_id)
 
-func _on_input_event(camera: Node, event: InputEvent, position: Vector3, normal: Vector3, shape_idx: int):
+func _on_input_event(_camera: Node, event: InputEvent, _event_position: Vector3, _normal: Vector3, _shape_idx: int):
 	"""Handle mouse click events"""
 	if event is InputEventMouseButton:
 		var mouse_event = event as InputEventMouseButton

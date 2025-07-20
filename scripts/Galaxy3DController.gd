@@ -88,8 +88,15 @@ func _initialize_galaxy():
 	
 	_update_planet_states()
 	
+	# Organize planets in container for better scene management
+	organize_planet_container()
+	
 	print("Galaxy3DController: Initialized with ", systems_data.size(), " planets")
 	print("Galaxy3DController: Current location set to ", current_location)
+	
+	# Print container stats for debugging
+	var stats = get_planet_container_stats()
+	print("Galaxy3DController: Planet distribution - ", stats)
 
 func _clear_existing_planets():
 	"""Clear all existing planet nodes"""
@@ -103,26 +110,34 @@ func _create_planet_node(system_id: String, system_data: Dictionary):
 	var planet_node = Node3D.new()
 	planet_node.name = "Planet_" + system_id
 	
+	# Calculate planet size based on system characteristics
+	var planet_size = _calculate_planet_size(system_data)
+	
 	# Create mesh instance for visual representation
 	var mesh_instance = MeshInstance3D.new()
 	var sphere_mesh = SphereMesh.new()
-	sphere_mesh.radius = 0.5
-	sphere_mesh.height = 1.0
+	sphere_mesh.radius = planet_size
+	sphere_mesh.height = planet_size * 2.0
+	sphere_mesh.radial_segments = 16
+	sphere_mesh.rings = 8
 	mesh_instance.mesh = sphere_mesh
 	
-	# Create material based on planet type
+	# Create material based on planet type with enhanced properties
 	var material = StandardMaterial3D.new()
 	var planet_color = _get_planet_color(system_data.get("type", "unknown"))
 	material.albedo_color = planet_color
 	material.emission_enabled = true
 	material.emission = planet_color * 0.3  # Subtle glow
+	material.flags_unshaded = false  # Allow proper lighting
+	material.flags_do_not_receive_shadows = false
+	material.flags_disable_ambient_light = false
 	mesh_instance.material_override = material
 	
 	# Create collision area for mouse interaction
 	var area_3d = Area3D.new()
 	var collision_shape = CollisionShape3D.new()
 	var sphere_shape = SphereShape3D.new()
-	sphere_shape.radius = 0.6  # Slightly larger than visual for easier clicking
+	sphere_shape.radius = planet_size * 1.2  # Slightly larger than visual for easier clicking
 	collision_shape.shape = sphere_shape
 	area_3d.add_child(collision_shape)
 	
@@ -135,8 +150,8 @@ func _create_planet_node(system_id: String, system_data: Dictionary):
 	planet_node.add_child(mesh_instance)
 	planet_node.add_child(area_3d)
 	
-	# Position planet in 3D space
-	var position_3d = _convert_2d_to_3d_position(system_data.get("position", Vector2.ZERO))
+	# Position planet in 3D space using improved positioning logic
+	var position_3d = _convert_2d_to_3d_position(system_data.get("position", Vector2.ZERO), system_data)
 	planet_node.position = position_3d
 	
 	# Store references
@@ -145,12 +160,13 @@ func _create_planet_node(system_id: String, system_data: Dictionary):
 	# Add to scene
 	planet_container.add_child(planet_node)
 	
-	# Store system data in the node for easy access
+	# Store system data and size in the node for easy access
 	planet_node.set_meta("system_id", system_id)
 	planet_node.set_meta("system_data", system_data)
+	planet_node.set_meta("planet_size", planet_size)
 
-func _convert_2d_to_3d_position(pos_2d: Vector2) -> Vector3:
-	"""Convert 2D galaxy position to 3D space coordinates"""
+func _convert_2d_to_3d_position(pos_2d: Vector2, system_data: Dictionary = {}) -> Vector3:
+	"""Convert 2D galaxy position to 3D space coordinates with enhanced positioning logic"""
 	# Calculate center point from all system positions for better centering
 	var center_x = 275.0  # Approximate center of current system positions
 	var center_y = 240.0
@@ -163,26 +179,26 @@ func _convert_2d_to_3d_position(pos_2d: Vector2) -> Vector3:
 	var x = normalized_x * GALAXY_SCALE
 	var z = normalized_z * GALAXY_SCALE
 	
-	# Add some vertical variation for visual interest
-	var y = sin(normalized_x + normalized_z) * Y_SPREAD * 0.5
+	# Enhanced vertical positioning based on system type and characteristics
+	var y = _calculate_planet_y_position(normalized_x, normalized_z, system_data)
 	
 	return Vector3(x, y, z)
 
 func _get_planet_color(planet_type: String) -> Color:
-	"""Get color for planet based on its type"""
+	"""Get color for planet based on its type - enhanced color system"""
 	match planet_type:
 		"agricultural":
-			return Color.GREEN  # Terra Prime
+			return Color(0.0, 0.8, 0.2)  # Terra Prime - Rich Green
 		"industrial":
-			return Color.ORANGE  # Minerva Station
+			return Color(1.0, 0.6, 0.0)  # Minerva Station - Industrial Orange
 		"luxury":
-			return Color.PURPLE  # Luxuria Resort
+			return Color(0.7, 0.2, 0.9)  # Luxuria Resort - Luxury Purple
 		"frontier":
-			return Color.RED  # Frontier Outpost
+			return Color(0.9, 0.2, 0.1)  # Frontier Outpost - Danger Red
 		"hub":
-			return Color.CYAN  # Nexus Station
+			return Color(0.0, 0.8, 0.9)  # Nexus Station - Hub Cyan
 		_:
-			return Color.WHITE  # Default
+			return Color(0.8, 0.8, 0.8)  # Default - Neutral Gray
 
 func _update_planet_states():
 	"""Update visual states of all planets based on game state"""
@@ -192,21 +208,27 @@ func _update_planet_states():
 		var planet_node = planet_nodes[system_id]
 		var mesh_instance = planet_node.get_child(0) as MeshInstance3D
 		var material = mesh_instance.material_override as StandardMaterial3D
+		var base_size = planet_node.get_meta("planet_size", 0.5)
 		
 		if system_id == current_location:
-			# Current location - bright glow
+			# Current location - bright glow and slight size increase
 			material.emission_energy = 1.0
-			planet_node.scale = Vector3.ONE * 1.1
+			material.emission = material.albedo_color * 0.5
+			planet_node.scale = Vector3.ONE * (1.0 + base_size * 0.2)  # Scale based on base size
 		elif system_id in visited_systems:
-			# Visited - normal glow
+			# Visited - normal glow and base scale
 			material.emission_energy = 0.5
+			material.emission = material.albedo_color * 0.3
+			material.transparency = BaseMaterial3D.TRANSPARENCY_DISABLED
+			material.albedo_color.a = 1.0
 			planet_node.scale = Vector3.ONE
 		else:
-			# Unexplored - reduced opacity and glow
+			# Unexplored - reduced opacity and glow, smaller scale
 			material.emission_energy = 0.2
+			material.emission = material.albedo_color * 0.1
 			material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-			material.albedo_color.a = 0.7
-			planet_node.scale = Vector3.ONE * 0.9
+			material.albedo_color.a = 0.5
+			planet_node.scale = Vector3.ONE * 0.8
 
 func select_planet(system_id: String):
 	"""Select a planet and emit selection signal"""
@@ -231,21 +253,34 @@ func _set_planet_selection_state(system_id: String, is_selected: bool):
 	var planet_node = planet_nodes[system_id]
 	var mesh_instance = planet_node.get_child(0) as MeshInstance3D
 	var material = mesh_instance.material_override as StandardMaterial3D
+	var base_size = planet_node.get_meta("planet_size", 0.5)
+	var visited_systems = game_manager.player_data.get("systems_visited", []) if game_manager else []
 	
 	if is_selected:
-		# Add selection highlight
+		# Add selection highlight with enhanced glow
 		material.rim_enabled = true
 		material.rim = Color.WHITE
 		material.rim_tint = 0.5
-		planet_node.scale = Vector3.ONE * 1.2
+		material.emission_energy = 0.8
+		material.emission = Color.WHITE * 0.3
+		planet_node.scale = Vector3.ONE * (1.0 + base_size * 0.4)  # Scale based on base size
 	else:
-		# Remove selection highlight
+		# Remove selection highlight and restore normal state
 		material.rim_enabled = false
-		# Reset scale based on current state
+		
+		# Reset to appropriate state based on visit status
 		if system_id == current_location:
-			planet_node.scale = Vector3.ONE * 1.1
-		else:
+			material.emission_energy = 1.0
+			material.emission = material.albedo_color * 0.5
+			planet_node.scale = Vector3.ONE * (1.0 + base_size * 0.2)
+		elif system_id in visited_systems:
+			material.emission_energy = 0.5
+			material.emission = material.albedo_color * 0.3
 			planet_node.scale = Vector3.ONE
+		else:
+			material.emission_energy = 0.2
+			material.emission = material.albedo_color * 0.1
+			planet_node.scale = Vector3.ONE * 0.8
 
 func update_planet_data(system_id: String, data: Dictionary):
 	"""Update planet data and visual representation"""
@@ -277,13 +312,13 @@ func _on_location_changed(system_id: String):
 	current_location = system_id
 	_update_planet_states()
 
-func _on_player_data_updated(data: Dictionary):
+func _on_player_data_updated(_data: Dictionary):
 	"""Handle player data updates"""
 	# Update planet states when player data changes
 	_update_planet_states()
 
 # Planet interaction handlers
-func _on_planet_input_event(system_id: String, camera: Node, event: InputEvent, position: Vector3, normal: Vector3, shape_idx: int):
+func _on_planet_input_event(system_id: String, _camera: Node, event: InputEvent, _event_position: Vector3, _normal: Vector3, _shape_idx: int):
 	"""Handle planet click events"""
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
@@ -293,14 +328,36 @@ func _on_planet_mouse_entered(system_id: String):
 	"""Handle planet hover start"""
 	if planet_nodes.has(system_id) and system_id != selected_planet:
 		var planet_node = planet_nodes[system_id]
-		planet_node.scale = planet_node.scale * 1.05  # Subtle scale increase
+		var mesh_instance = planet_node.get_child(0) as MeshInstance3D
+		var material = mesh_instance.material_override as StandardMaterial3D
+		var base_size = planet_node.get_meta("planet_size", 0.5)
+		
+		# Enhance glow on hover
+		material.emission_energy = min(1.0, material.emission_energy + 0.3)
+		
+		# Subtle scale increase based on base size
+		planet_node.scale = planet_node.scale * (1.0 + base_size * 0.1)
 	planet_hovered.emit(system_id)
 
 func _on_planet_mouse_exited(system_id: String):
 	"""Handle planet hover end"""
 	if planet_nodes.has(system_id) and system_id != selected_planet:
 		var planet_node = planet_nodes[system_id]
-		planet_node.scale = planet_node.scale / 1.05  # Reset scale
+		var mesh_instance = planet_node.get_child(0) as MeshInstance3D
+		var material = mesh_instance.material_override as StandardMaterial3D
+		var base_size = planet_node.get_meta("planet_size", 0.5)
+		var visited_systems = game_manager.player_data.get("systems_visited", []) if game_manager else []
+		
+		# Reset scale and glow to appropriate state
+		if system_id == current_location:
+			material.emission_energy = 1.0
+			planet_node.scale = Vector3.ONE * (1.0 + base_size * 0.2)
+		elif system_id in visited_systems:
+			material.emission_energy = 0.5
+			planet_node.scale = Vector3.ONE
+		else:
+			material.emission_energy = 0.2
+			planet_node.scale = Vector3.ONE * 0.8
 	planet_unhovered.emit(system_id)
 
 # Public API methods
@@ -318,7 +375,78 @@ func get_planet_data(system_id: String) -> Dictionary:
 		return planet_nodes[system_id].get_meta("system_data", {})
 	return {}
 
-func animate_ship_travel(from_system: String, to_system: String):
+func _calculate_planet_size(system_data: Dictionary) -> float:
+	"""Calculate planet size based on system characteristics"""
+	var base_size = 0.5  # Default planet radius
+	var system_type = system_data.get("type", "unknown")
+	
+	# Size variation based on planet type
+	match system_type:
+		"agricultural":
+			base_size = 0.6  # Terra Prime - Larger agricultural world
+		"industrial":
+			base_size = 0.7  # Minerva Station - Large industrial complex
+		"luxury":
+			base_size = 0.4  # Luxuria Resort - Smaller luxury destination
+		"frontier":
+			base_size = 0.3  # Frontier Outpost - Small outpost
+		"hub":
+			base_size = 0.8  # Nexus Station - Large hub station
+		_:
+			base_size = 0.5  # Default size
+	
+	# Add some variation based on risk level
+	var risk_level = system_data.get("risk_level", "safe")
+	match risk_level:
+		"safe":
+			base_size *= 1.1  # Safe systems tend to be larger/more developed
+		"high":
+			base_size *= 0.9  # High risk systems tend to be smaller
+		_:
+			base_size *= 1.0  # No change for unknown risk levels
+	
+	# Add variation based on special features
+	var special_features = system_data.get("special_features", [])
+	if special_features.has("trade_hub"):
+		base_size *= 1.2  # Trade hubs are larger
+	if special_features.has("upgrade_shop"):
+		base_size *= 1.1  # Systems with upgrade shops are slightly larger
+	if special_features.has("volatile_prices"):
+		base_size *= 0.8  # Volatile systems tend to be smaller/less stable
+	
+	# Clamp size to reasonable bounds
+	return clamp(base_size, 0.2, 1.0)
+
+func _calculate_planet_y_position(normalized_x: float, normalized_z: float, system_data: Dictionary) -> float:
+	"""Calculate Y position for planet based on system characteristics"""
+	var base_y = sin(normalized_x + normalized_z) * Y_SPREAD * 0.5
+	var system_type = system_data.get("type", "unknown")
+	
+	# Adjust Y position based on system type for visual variety
+	match system_type:
+		"agricultural":
+			base_y += 0.2  # Agricultural worlds slightly elevated
+		"industrial":
+			base_y -= 0.3  # Industrial systems lower (heavy/grounded)
+		"luxury":
+			base_y += 0.5  # Luxury resorts elevated (aspirational)
+		"frontier":
+			base_y += sin(normalized_x * 3.0) * 0.4  # Frontier systems more varied
+		"hub":
+			base_y *= 0.5  # Hub systems closer to center plane
+		_:
+			pass  # Default positioning
+	
+	# Add some randomness based on position for natural variation
+	var position_seed = abs(int(normalized_x * 1000) + int(normalized_z * 1000))
+	var rng = RandomNumberGenerator.new()
+	rng.seed = position_seed
+	base_y += rng.randf_range(-0.2, 0.2)
+	
+	# Clamp Y position to reasonable bounds
+	return clamp(base_y, -Y_SPREAD, Y_SPREAD)
+
+func animate_ship_travel(_from_system: String, to_system: String):
 	"""Animate ship travel between systems (placeholder for future implementation)"""
 	# This will be implemented in a later task
 	# For now, just update the current location immediately
@@ -328,3 +456,70 @@ func animate_ship_travel(from_system: String, to_system: String):
 func refresh_galaxy():
 	"""Refresh the entire galaxy display"""
 	_initialize_galaxy()
+
+func organize_planet_container():
+	"""Organize planets in the container for better scene management"""
+	if not planet_container:
+		return
+	
+	# Sort planets by type for better organization
+	var planet_groups = {
+		"hub": [],
+		"agricultural": [],
+		"industrial": [],
+		"luxury": [],
+		"frontier": []
+	}
+	
+	# Group planets by type
+	for system_id in planet_nodes.keys():
+		var planet_node = planet_nodes[system_id]
+		var system_data = planet_node.get_meta("system_data", {})
+		var planet_type = system_data.get("type", "unknown")
+		
+		if planet_groups.has(planet_type):
+			planet_groups[planet_type].append(planet_node)
+		else:
+			# Add unknown types to frontier group
+			planet_groups["frontier"].append(planet_node)
+	
+	# Reorganize nodes in container (optional - mainly for scene tree organization)
+	# This doesn't affect visual positioning but helps with debugging and scene management
+	var index = 0
+	for group_type in planet_groups.keys():
+		for planet_node in planet_groups[group_type]:
+			planet_container.move_child(planet_node, index)
+			index += 1
+
+func get_planet_container_stats() -> Dictionary:
+	"""Get statistics about the planet container organization"""
+	var stats = {
+		"total_planets": planet_nodes.size(),
+		"types": {},
+		"size_distribution": {
+			"small": 0,
+			"medium": 0,
+			"large": 0
+		}
+	}
+	
+	for system_id in planet_nodes.keys():
+		var planet_node = planet_nodes[system_id]
+		var system_data = planet_node.get_meta("system_data", {})
+		var planet_type = system_data.get("type", "unknown")
+		var planet_size = planet_node.get_meta("planet_size", 0.5)
+		
+		# Count by type
+		if not stats.types.has(planet_type):
+			stats.types[planet_type] = 0
+		stats.types[planet_type] += 1
+		
+		# Count by size
+		if planet_size < 0.4:
+			stats.size_distribution.small += 1
+		elif planet_size < 0.7:
+			stats.size_distribution.medium += 1
+		else:
+			stats.size_distribution.large += 1
+	
+	return stats

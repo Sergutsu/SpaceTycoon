@@ -1,4 +1,4 @@
-[gd_scene load_steps=2 format=3 uid="uid://bvx8y9z0a1b2c"]
+[gd_scene load_steps=2 format=3 uid="uid://bvx80a00a1b2c"]
 
 [ext_resource type="Script" path="res://scripts/Galaxy3DController.gd" id="1_galaxy3d"]
 
