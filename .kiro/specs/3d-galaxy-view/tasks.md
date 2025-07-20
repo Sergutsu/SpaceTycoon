@@ -47,7 +47,12 @@
   - Create planet container organization for scene management
   - _Requirements: 1.1, 1.2, 1.3_
 
-- [ ] 5. Create camera controller with orbit and zoom functionality
+- [x] 5. Create camera controller with orbit and zoom functionality
+
+
+
+
+
   - Implement CameraController3D.gd for 3D camera movement
   - Add mouse drag orbit controls around galaxy center
   - Implement mouse wheel zoom in/out functionality

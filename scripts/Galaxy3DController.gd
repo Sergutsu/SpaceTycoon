@@ -7,7 +7,7 @@ signal planet_hovered(system_id: String)
 signal planet_unhovered(system_id: String)
 
 # Node references
-@onready var camera_3d: Camera3D = $Camera3D
+@onready var camera_3d: CameraController3D = $Camera3D
 @onready var planet_container: Node3D = $PlanetContainer
 @onready var ship_container: Node3D = $ShipContainer
 @onready var effects_container: Node3D = $EffectsContainer
@@ -97,6 +97,10 @@ func _initialize_galaxy():
 	# Print container stats for debugging
 	var stats = get_planet_container_stats()
 	print("Galaxy3DController: Planet distribution - ", stats)
+	
+	# Update camera bounds after planets are initialized
+	if camera_3d:
+		camera_3d.refresh_bounds()
 
 func _clear_existing_planets():
 	"""Clear all existing planet nodes"""
@@ -456,6 +460,23 @@ func animate_ship_travel(_from_system: String, to_system: String):
 func refresh_galaxy():
 	"""Refresh the entire galaxy display"""
 	_initialize_galaxy()
+
+func update_camera_controls(delta: float):
+	"""Update camera controls - called from _process if needed"""
+	# Camera controller handles its own input and updates
+	# This method is available for any additional camera logic if needed
+	pass
+
+func focus_camera_on_planet(system_id: String):
+	"""Focus camera on a specific planet"""
+	if planet_nodes.has(system_id) and camera_3d:
+		var planet_position = planet_nodes[system_id].position
+		camera_3d.focus_on_planet(planet_position)
+
+func reset_camera_view():
+	"""Reset camera to default galaxy view"""
+	if camera_3d:
+		camera_3d.focus_on_galaxy_center()
 
 func organize_planet_container():
 	"""Organize planets in the container for better scene management"""

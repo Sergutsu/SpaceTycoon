@@ -55,6 +55,12 @@ func _ready():
 	if not use_3d_mode:
 		_create_systems()
 		_create_ship()
+	
+	# Connect to 3D galaxy signals if in 3D mode
+	if use_3d_mode and galaxy_3d_scene:
+		galaxy_3d_scene.planet_selected.connect(_on_3d_planet_selected)
+		galaxy_3d_scene.planet_hovered.connect(_on_3d_planet_hovered)
+		galaxy_3d_scene.planet_unhovered.connect(_on_3d_planet_unhovered)
 
 func _initialize_3d_viewport():
 	# Get 3D viewport reference
@@ -375,3 +381,32 @@ func _update_system_visuals():
 func _on_ship_movement_complete():
 	# Ship has arrived at destination
 	pass
+
+# 3D Galaxy interaction handlers
+func _on_3d_planet_selected(system_id: String):
+	"""Handle planet selection from 3D galaxy view"""
+	if system_id != current_system_id:
+		# Get travel cost and check if we can travel
+		var destinations = game_manager.get_available_destinations()
+		var can_travel = false
+		
+		for dest in destinations:
+			if dest["id"] == system_id:
+				can_travel = dest["can_travel"]
+				break
+		
+		if can_travel:
+			var result = game_manager.travel_to_system(system_id)
+			if not result.success:
+				# Show error feedback
+				print("Travel failed: " + result.error)
+		else:
+			print("Insufficient fuel for travel to " + system_id)
+
+func _on_3d_planet_hovered(system_id: String):
+	"""Handle planet hover from 3D galaxy view"""
+	_show_tooltip(system_id)
+
+func _on_3d_planet_unhovered(_system_id: String):
+	"""Handle planet unhover from 3D galaxy view"""
+	_hide_tooltip()
