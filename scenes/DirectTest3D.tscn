@@ -1,0 +1,32 @@
+[gd_scene load_steps=2 format=3 uid="uid://direct_test_3d"]
+
+[ext_resource type="Script" path="res://scripts/SimpleGalaxy3D.gd" id="1_simple3d"]
+
+[sub_resource type="Environment" id="Environment_1"]
+background_mode = 1
+background_color = Color(0.1, 0.1, 0.2, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.5, 0.5, 0.7, 1)
+ambient_light_energy = 1.5
+glow_enabled = true
+glow_intensity = 2.0
+glow_strength = 3.0
+glow_bloom = 0.5
+
+[node name="DirectTest3D" type="Node3D"]
+script = ExtResource("1_simple3d")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.866025, 0.5, 0, -0.5, 0.866025, 0, 8, 20)
+fov = 75.0
+near = 0.1
+far = 1000.0
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.707107, -0.5, 0.5, 0, 0.707107, 0.707107, -0.707107, -0.5, 0.5, 0, 20, 20)
+light_energy = 5.0
+light_color = Color(1, 1, 1, 1)
+shadow_enabled = false
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_1")

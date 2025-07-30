@@ -41,14 +41,27 @@ var planet_bounds: AABB
 var galaxy_controller: Galaxy3DController
 
 func _ready():
-	# Find the Galaxy3DController parent
+	print("CameraController3D: Initializing...")
+	
+	# Find the Galaxy3DController parent (optional)
 	galaxy_controller = get_parent() as Galaxy3DController
 	if not galaxy_controller:
-		push_error("CameraController3D: Parent must be Galaxy3DController")
-		return
+		# Try SimpleGalaxy3D
+		var simple_galaxy = get_parent() as SimpleGalaxy3D
+		if simple_galaxy:
+			print("CameraController3D: Using SimpleGalaxy3D parent")
+		else:
+			print("CameraController3D: No galaxy controller parent found, using standalone mode")
 	
 	# Initialize camera position
 	_update_camera_position()
+	print("CameraController3D: Initial camera position: ", position)
+	print("CameraController3D: Initial camera rotation: ", rotation_degrees)
+	
+	# Force camera to look at origin for debugging
+	position = Vector3(0, 5, 15)
+	look_at(Vector3.ZERO, Vector3.UP)
+	print("CameraController3D: Forced camera to look at origin from ", position)
 	
 	# Calculate initial planet bounds
 	call_deferred("_calculate_planet_bounds")
@@ -57,6 +70,8 @@ func _ready():
 	camera_tween = create_tween()
 	camera_tween.set_loops(0)
 	camera_tween.finished.connect(_on_tween_finished)
+	
+	print("CameraController3D: Initialization complete")
 
 func _input(event: InputEvent):
 	if event is InputEventMouseButton:
@@ -182,16 +197,29 @@ func _update_camera_position():
 	
 	# Look at the orbit center
 	look_at(orbit_center, Vector3.UP)
+	
+	# Debug output
+	if _frame_count % 60 == 0:  # Every second
+		print("CameraController3D: Position ", position, " looking at ", orbit_center)
 
 func _calculate_planet_bounds():
 	"""Calculate bounds of all planets for camera limiting"""
-	if not galaxy_controller:
-		return
+	# Try to get planet positions from parent
+	var planet_positions = {}
 	
-	var planet_positions = galaxy_controller.get_all_planet_positions()
+	if galaxy_controller and galaxy_controller.has_method("get_all_planet_positions"):
+		planet_positions = galaxy_controller.get_all_planet_positions()
+	else:
+		# Try SimpleGalaxy3D
+		var simple_galaxy = get_parent() as SimpleGalaxy3D
+		if simple_galaxy and simple_galaxy.planet_nodes:
+			for planet_id in simple_galaxy.planet_nodes.keys():
+				planet_positions[planet_id] = simple_galaxy.planet_nodes[planet_id].position
+	
 	if planet_positions.is_empty():
 		# Default bounds if no planets
-		planet_bounds = AABB(Vector3(-10, -5, -10), Vector3(20, 10, 20))
+		planet_bounds = AABB(Vector3(-15, -5, -15), Vector3(30, 10, 30))
+		print("CameraController3D: Using default planet bounds")
 		return
 	
 	# Calculate AABB from all planet positions
@@ -207,7 +235,7 @@ func _calculate_planet_bounds():
 		max_pos.z = max(max_pos.z, pos.z)
 	
 	# Add padding around planets
-	var padding = Vector3(3, 2, 3)
+	var padding = Vector3(5, 3, 5)
 	planet_bounds = AABB(min_pos - padding, max_pos - min_pos + padding * 2)
 	
 	print("CameraController3D: Planet bounds calculated - ", planet_bounds)
@@ -241,7 +269,7 @@ func focus_on_galaxy_center(use_smooth_transition: bool = true):
 		target_azimuth = 0.0
 		target_elevation = 30.0
 
-func set_orbit_sensitivity(sensitivity: float):
+func set_orbit_sensitivity(_sensitivity: float):
 	"""Set orbit sensitivity (for settings/preferences)"""
 	# This would modify ORBIT_SENSITIVITY if it wasn't const
 	# Could be implemented with a variable instead of const for user preferences
