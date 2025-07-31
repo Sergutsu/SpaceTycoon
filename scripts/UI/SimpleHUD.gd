@@ -15,6 +15,10 @@ var mini_map_placeholder: Panel
 # Game Manager reference
 var game_manager: GameManager
 
+# UI Management
+var theme_manager: ThemeManager
+var state_manager: PanelStateManager
+
 # Alert system
 var active_alerts: Array[Dictionary] = []
 var max_alerts: int = 3
@@ -30,7 +34,7 @@ func _ready():
 	_create_ui_elements()
 	
 	# Get game manager reference
-	game_manager = get_node("../GameManager")
+	game_manager = get_node("../../GameManager")
 	if game_manager:
 		_connect_signals()
 		_update_all_displays()
@@ -38,12 +42,7 @@ func _ready():
 		
 		# Add welcome alert
 		add_alert("info", "Welcome to Space Transport Tycoon!", 4.0)
-		add_alert("success", "Enhanced HUD loaded successfully", 3.0)
-		
-		# Initialize MainStatusPanel if it exists
-		var status_panel = get_node("../MainStatusPanel")
-		if status_panel and status_panel.has_method("initialize"):
-			status_panel.initialize(game_manager)
+		add_alert("success", "Enhanced HUD with navigation loaded successfully", 3.0)
 	else:
 		print("SimpleHUD: GameManager not found")
 		add_alert("error", "GameManager not found - some features may not work", 10.0)
@@ -204,8 +203,66 @@ func _create_ui_elements():
 	notification_indicator.text = "📬 0"
 	notification_indicator.name = "NotificationIndicator"
 	notification_indicator.add_theme_font_size_override("font_size", 10)
-	notification_indicator.pressed.connect(_toggle_notification_center)
+	notification_indicator.pressed.connect(_show_notifications)
 	add_child(notification_indicator)
+	
+	# Navigation status (top center)
+	var nav_status = Panel.new()
+	nav_status.anchors_preset = Control.PRESET_TOP_WIDE
+	nav_status.offset_left = 200
+	nav_status.offset_right = -200
+	nav_status.offset_top = 10
+	nav_status.offset_bottom = 35
+	nav_status.name = "NavigationStatus"
+	nav_status.visible = false  # Only show when navigating
+	add_child(nav_status)
+	
+	# Style navigation status
+	var nav_style = StyleBoxFlat.new()
+	nav_style.bg_color = Color(0.1, 0.1, 0.3, 0.8)
+	nav_style.corner_radius_top_left = 5
+	nav_style.corner_radius_top_right = 5
+	nav_style.corner_radius_bottom_left = 5
+	nav_style.corner_radius_bottom_right = 5
+	nav_status.add_theme_stylebox_override("panel", nav_style)
+	
+	var nav_label = Label.new()
+	nav_label.name = "NavigationLabel"
+	nav_label.anchors_preset = Control.PRESET_FULL_RECT
+	nav_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	nav_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	nav_label.text = "Current Panel: Main"
+	nav_label.add_theme_font_size_override("font_size", 10)
+	nav_label.add_theme_color_override("font_color", Color.CYAN)
+	nav_status.add_child(nav_label)
+	
+	# Quick navigation buttons (bottom center)
+	var quick_nav = HBoxContainer.new()
+	quick_nav.anchors_preset = Control.PRESET_BOTTOM_WIDE
+	quick_nav.offset_left = 300
+	quick_nav.offset_right = -300
+	quick_nav.offset_top = -40
+	quick_nav.offset_bottom = -10
+	quick_nav.name = "QuickNavigation"
+	quick_nav.alignment = BoxContainer.ALIGNMENT_CENTER
+	add_child(quick_nav)
+	
+	# Add quick navigation buttons
+	var nav_buttons = [
+		["TAB", "Status", "main_status_panel"],
+		["M", "Market", "market_screen"],
+		["F", "Fleet", "asset_management_panel"],
+		["N", "News", "notification_center"],
+		["G", "Galaxy", "galaxy_map_panel"]
+	]
+	
+	for button_data in nav_buttons:
+		var nav_button = Button.new()
+		nav_button.text = button_data[0] + "\n" + button_data[1]
+		nav_button.custom_minimum_size = Vector2(50, 30)
+		nav_button.add_theme_font_size_override("font_size", 8)
+		nav_button.pressed.connect(_quick_navigate.bind(button_data[2]))
+		quick_nav.add_child(nav_button)
 
 func _connect_signals():
 	"""Connect to GameManager signals"""
@@ -458,66 +515,33 @@ func _process(delta):
 		_update_notification_indicator()
 
 func _input(event):
-	"""Handle keyboard shortcuts"""
+	"""Handle HUD-specific input (navigation is handled by UIManager)"""
 	if event is InputEventKey and event.pressed:
 		match event.keycode:
-			KEY_TAB:
-				_toggle_status_panel()
-			KEY_M:
-				_toggle_market_screen()
-			KEY_F:
-				_toggle_asset_panel()
-			KEY_N:
-				_toggle_notification_center()
+			KEY_F1:
+				_toggle_performance_display()
+			KEY_F2:
+				_toggle_debug_info()
 
-func _toggle_status_panel():
-	"""Toggle the main status panel"""
-	var status_panel = get_node("../MainStatusPanel")
-	if status_panel:
-		status_panel.visible = not status_panel.visible
-		if status_panel.visible:
-			add_alert("info", "Status panel opened (TAB to close)", 2.0)
-		else:
-			add_alert("info", "Status panel closed", 1.0)
+func _toggle_performance_display():
+	"""Toggle performance display visibility"""
+	if fps_label:
+		fps_label.visible = not fps_label.visible
+		add_alert("info", "Performance display " + ("shown" if fps_label.visible else "hidden"), 1.0)
 
-func _toggle_market_screen():
-	"""Toggle the market screen"""
-	var market_screen = get_node("../MarketScreen")
-	if market_screen:
-		market_screen.visible = not market_screen.visible
-		if market_screen.visible:
-			add_alert("info", "Market screen opened (M to close)", 2.0)
-			# Initialize market screen if needed
-			if market_screen.has_method("initialize") and game_manager:
-				market_screen.initialize(game_manager)
-		else:
-			add_alert("info", "Market screen closed", 1.0)
-
-func _toggle_asset_panel():
-	"""Toggle the asset management panel"""
-	var asset_panel = get_node("../AssetManagementPanel")
-	if asset_panel:
-		asset_panel.visible = not asset_panel.visible
-		if asset_panel.visible:
-			add_alert("info", "Asset panel opened (F to close)", 2.0)
-			# Initialize asset panel if needed
-			if asset_panel.has_method("initialize") and game_manager:
-				asset_panel.initialize(game_manager)
-		else:
-			add_alert("info", "Asset panel closed", 1.0)
-
-func _toggle_notification_center():
-	"""Toggle the notification center"""
-	var notification_center = get_node("../NotificationCenter")
-	if notification_center:
-		notification_center.visible = not notification_center.visible
-		if notification_center.visible:
-			add_alert("info", "Notifications opened (N to close)", 2.0)
-			# Initialize notification center if needed
-			if notification_center.has_method("initialize") and game_manager:
-				notification_center.initialize(game_manager)
-		else:
-			add_alert("info", "Notifications closed", 1.0)
+func _toggle_debug_info():
+	"""Toggle debug information display"""
+	var trend_panel = get_node_or_null("TrendPanel")
+	var artifact_panel = get_node_or_null("ArtifactPanel")
+	
+	var show_debug = true
+	if trend_panel:
+		show_debug = not trend_panel.visible
+		trend_panel.visible = show_debug
+	if artifact_panel:
+		artifact_panel.visible = show_debug
+	
+	add_alert("info", "Debug info " + ("shown" if show_debug else "hidden"), 1.0)
 
 # Specialized alert methods for different game events
 func add_trade_alert(good_type: String, quantity: int, profit: int, is_buying: bool):
@@ -759,3 +783,31 @@ func _update_notification_indicator():
 		else:
 			indicator.text = "📭 0"
 			indicator.modulate = Color.WHITE
+
+# HUD-specific methods (navigation handled by UIManager)
+func show_navigation_breadcrumbs():
+	"""Show navigation breadcrumbs in HUD"""
+	var ui_manager = get_parent() as UIManager
+	if ui_manager:
+		var breadcrumbs = ui_manager.get_navigation_breadcrumbs()
+		if breadcrumbs.size() > 0:
+			var breadcrumb_text = " > ".join(breadcrumbs)
+			add_alert("info", "Navigation: " + breadcrumb_text, 2.0)
+
+func update_navigation_status(panel_name: String):
+	"""Update navigation status display"""
+	var nav_status = get_node_or_null("NavigationStatus")
+	var nav_label = get_node_or_null("NavigationStatus/NavigationLabel")
+	
+	if nav_status and nav_label:
+		if panel_name == "" or panel_name == "hud":
+			nav_status.visible = false
+		else:
+			nav_status.visible = true
+			nav_label.text = "Current Panel: " + panel_name.replace("_", " ").capitalize()
+
+func _show_notifications():
+	"""Show notifications through UIManager"""
+	var ui_manager = get_parent() as UIManager
+	if ui_manager:
+		ui_manager.switch_to_panel_by_name("notification_center")

@@ -12,7 +12,7 @@ Space Transport Tycoon is a web-based strategy game where players build and mana
 - **Phase**: Working Prototype (v0.1)
 - **Platform**: Web-based (HTML5/JavaScript)
 - **Playable Features**: 3-planet galaxy, basic trading, fuel management
-- **Location**: JSPrototype/ folder contains functional game
+
 
 ## Key Game Pillars
 1. **Economic Strategy**: Dynamic supply/demand pricing creates meaningful trade decisions

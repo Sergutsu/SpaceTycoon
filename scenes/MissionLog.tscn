@@ -1,0 +1,90 @@
+[gd_scene load_steps=2 format=3 uid="uid://mission_log"]
+
+[ext_resource type="Script" path="res://scripts/UI/MissionLog.gd" id="1_mission_log"]
+
+[node name="MissionLog" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_mission_log")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Title" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "Mission Log"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="TabContainer" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ActiveMissions" type="Button" parent="VBoxContainer/TabContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+button_pressed = true
+text = "Active"
+
+[node name="CompletedMissions" type="Button" parent="VBoxContainer/TabContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+text = "Completed"
+
+[node name="AvailableMissions" type="Button" parent="VBoxContainer/TabContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+text = "Available"
+
+[node name="MissionContainer" type="VBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="MissionList" type="ItemList" parent="VBoxContainer/MissionContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+custom_minimum_size = Vector2(0, 200)
+
+[node name="HSplitContainer" type="HSplitContainer" parent="VBoxContainer/MissionContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="MissionDetails" type="RichTextLabel" parent="VBoxContainer/MissionContainer/HSplitContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+bbcode_enabled = true
+text = "Select a mission to view details"
+fit_content = true
+scroll_active = true
+
+[node name="ActionButtons" type="VBoxContainer" parent="VBoxContainer/MissionContainer/HSplitContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(120, 0)
+
+[node name="AcceptButton" type="Button" parent="VBoxContainer/MissionContainer/HSplitContainer/ActionButtons"]
+layout_mode = 2
+text = "Accept"
+
+[node name="AbandonButton" type="Button" parent="VBoxContainer/MissionContainer/HSplitContainer/ActionButtons"]
+layout_mode = 2
+text = "Abandon"
+
+[node name="RefreshButton" type="Button" parent="VBoxContainer/MissionContainer/HSplitContainer/ActionButtons"]
+layout_mode = 2
+text = "Refresh"
