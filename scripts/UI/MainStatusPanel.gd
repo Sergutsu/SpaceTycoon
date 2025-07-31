@@ -59,11 +59,23 @@ func _setup_credits_section():
 	trend_label.text = "Trend: --"
 	credits_section.add_child(trend_label)
 	
-	# Net worth (if applicable)
+	# Net worth
 	var networth_label = Label.new()
 	networth_label.name = "NetWorth"
 	networth_label.text = "Net Worth: $0"
 	credits_section.add_child(networth_label)
+	
+	# Profit per hour (if available)
+	var profit_rate_label = Label.new()
+	profit_rate_label.name = "ProfitRate"
+	profit_rate_label.text = "Profit Rate: $0/hr"
+	credits_section.add_child(profit_rate_label)
+	
+	# Automation income
+	var automation_label = Label.new()
+	automation_label.name = "AutomationIncome"
+	automation_label.text = "Automation: $0"
+	credits_section.add_child(automation_label)
 
 func _setup_fleet_section():
 	"""Set up the fleet status section"""
@@ -81,23 +93,35 @@ func _setup_fleet_section():
 	title_label.add_theme_color_override("font_color", Color.GREEN)
 	fleet_section.add_child(title_label)
 	
-	# Ship count
-	var ship_count_label = Label.new()
-	ship_count_label.name = "ShipCount"
-	ship_count_label.text = "Active Ships: 1"
-	fleet_section.add_child(ship_count_label)
+	# Ship name and status
+	var ship_name_label = Label.new()
+	ship_name_label.name = "ShipName"
+	ship_name_label.text = "Ship: Stellar Hauler"
+	fleet_section.add_child(ship_name_label)
 	
 	# Fleet capacity
 	var capacity_label = Label.new()
 	capacity_label.name = "FleetCapacity"
-	capacity_label.text = "Total Cargo: 0/50"
+	capacity_label.text = "Cargo: 0/50"
 	fleet_section.add_child(capacity_label)
+	
+	# Fuel status
+	var fuel_status_label = Label.new()
+	fuel_status_label.name = "FuelStatus"
+	fuel_status_label.text = "Fuel: 100/100"
+	fleet_section.add_child(fuel_status_label)
 	
 	# Fleet efficiency
 	var efficiency_label = Label.new()
 	efficiency_label.name = "FleetEfficiency"
 	efficiency_label.text = "Efficiency: 100%"
 	fleet_section.add_child(efficiency_label)
+	
+	# Upgrade levels
+	var upgrades_label = Label.new()
+	upgrades_label.name = "UpgradeLevels"
+	upgrades_label.text = "Upgrades: Cargo(0) Engine(0) Scanner(0) AI(0)"
+	fleet_section.add_child(upgrades_label)
 
 func _setup_materials_section():
 	"""Set up the materials/inventory section"""
@@ -213,6 +237,22 @@ func _update_net_worth(credits: int):
 	var net_worth = credits + cargo_value + ship_value
 	
 	networth_label.text = "Net Worth: $" + _format_number(net_worth)
+	
+	# Update profit rate
+	var profit_rate_label = credits_section.get_node_or_null("ProfitRate") as Label
+	if profit_rate_label:
+		var playtime_hours = game_manager.player_data.statistics.playtime_seconds / 3600.0
+		if playtime_hours > 0:
+			var profit_per_hour = game_manager.player_data.statistics.total_credits_earned / playtime_hours
+			profit_rate_label.text = "Profit Rate: $" + _format_number(int(profit_per_hour)) + "/hr"
+		else:
+			profit_rate_label.text = "Profit Rate: --"
+	
+	# Update automation income
+	var automation_label = credits_section.get_node_or_null("AutomationIncome") as Label
+	if automation_label:
+		var automation_income = game_manager.player_data.automation_profits
+		automation_label.text = "Automation: $" + _format_number(automation_income)
 
 func _calculate_cargo_value() -> int:
 	"""Calculate current cargo value"""
@@ -230,12 +270,24 @@ func _calculate_cargo_value() -> int:
 	return total_value
 
 func _calculate_ship_value() -> int:
-	"""Calculate current ship value"""
-	# TODO: Implement ship valuation based on upgrades
-	return 10000  # Base ship value
+	"""Calculate current ship value based on upgrades"""
+	if not game_manager:
+		return 10000
+	
+	var base_value = 10000
+	var upgrade_value = 0
+	
+	# Calculate upgrade values (rough estimates)
+	var upgrades = game_manager.player_data.ship.upgrades
+	upgrade_value += upgrades.cargo_hold * 2000  # Each cargo upgrade worth 2k
+	upgrade_value += upgrades.engine * 3000      # Each engine upgrade worth 3k
+	upgrade_value += upgrades.scanner * 1500     # Each scanner upgrade worth 1.5k
+	upgrade_value += upgrades.ai_core * 5000     # Each AI upgrade worth 5k
+	
+	return base_value + upgrade_value
 
 func update_cargo(cargo: Dictionary):
-	"""Update materials/inventory display"""
+	"""Update materials/inventory display with values"""
 	if not materials_section:
 		return
 	
@@ -244,13 +296,53 @@ func update_cargo(cargo: Dictionary):
 	for i in range(1, children.size()):  # Skip title
 		children[i].queue_free()
 	
-	# Add current inventory
+	var total_cargo_value = 0
+	
+	# Add current inventory with values
 	for good_type in cargo.keys():
 		var quantity = cargo[good_type]
 		if quantity > 0:
+			var item_container = HBoxContainer.new()
+			materials_section.add_child(item_container)
+			
+			# Item name and quantity
 			var item_label = Label.new()
 			item_label.text = good_type.capitalize() + ": " + str(quantity)
-			materials_section.add_child(item_label)
+			item_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			item_container.add_child(item_label)
+			
+			# Item value
+			if game_manager:
+				var current_system = game_manager.player_data.current_system
+				var price = game_manager.economy_system.calculate_dynamic_price(current_system, good_type)
+				var item_value = quantity * price
+				total_cargo_value += item_value
+				
+				var value_label = Label.new()
+				value_label.text = "$" + _format_number(item_value)
+				value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+				value_label.modulate = Color.YELLOW
+				item_container.add_child(value_label)
+	
+	# Add total cargo value
+	if total_cargo_value > 0:
+		var separator = HSeparator.new()
+		materials_section.add_child(separator)
+		
+		var total_container = HBoxContainer.new()
+		materials_section.add_child(total_container)
+		
+		var total_label = Label.new()
+		total_label.text = "Total Value:"
+		total_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		total_label.add_theme_color_override("font_color", Color.CYAN)
+		total_container.add_child(total_label)
+		
+		var total_value_label = Label.new()
+		total_value_label.text = "$" + _format_number(total_cargo_value)
+		total_value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		total_value_label.add_theme_color_override("font_color", Color.CYAN)
+		total_container.add_child(total_value_label)
 	
 	# Add empty message if no cargo
 	if cargo.is_empty() or _get_total_cargo(cargo) == 0:
@@ -264,24 +356,60 @@ func _update_fleet_status():
 	if not game_manager:
 		return
 	
-	# Update ship count (currently always 1)
-	var ship_count_label = fleet_section.get_node_or_null("ShipCount") as Label
-	if ship_count_label:
-		ship_count_label.text = "Active Ships: 1"
+	# Update ship name
+	var ship_name_label = fleet_section.get_node_or_null("ShipName") as Label
+	if ship_name_label:
+		ship_name_label.text = "Ship: " + game_manager.player_data.ship.name
 	
 	# Update fleet capacity
 	var capacity_label = fleet_section.get_node_or_null("FleetCapacity") as Label
 	if capacity_label:
 		var total_cargo = _get_total_cargo(game_manager.player_data.inventory)
 		var max_cargo = game_manager.player_data.ship.cargo_capacity
-		capacity_label.text = "Total Cargo: " + str(total_cargo) + "/" + str(max_cargo)
+		capacity_label.text = "Cargo: " + str(total_cargo) + "/" + str(max_cargo)
+		
+		# Color code based on capacity
+		var capacity_percentage = float(total_cargo) / float(max_cargo)
+		if capacity_percentage > 0.9:
+			capacity_label.modulate = Color.RED
+		elif capacity_percentage > 0.7:
+			capacity_label.modulate = Color.ORANGE
+		else:
+			capacity_label.modulate = Color.WHITE
 	
-	# Update efficiency
+	# Update fuel status
+	var fuel_status_label = fleet_section.get_node_or_null("FuelStatus") as Label
+	if fuel_status_label:
+		var current_fuel = game_manager.player_data.ship.current_fuel
+		var max_fuel = game_manager.player_data.ship.fuel_capacity
+		fuel_status_label.text = "Fuel: " + str(current_fuel) + "/" + str(max_fuel)
+		
+		# Color code based on fuel level
+		var fuel_percentage = float(current_fuel) / float(max_fuel)
+		if fuel_percentage < 0.2:
+			fuel_status_label.modulate = Color.RED
+		elif fuel_percentage < 0.5:
+			fuel_status_label.modulate = Color.YELLOW
+		else:
+			fuel_status_label.modulate = Color.WHITE
+	
+	# Update efficiency (based on fuel and cargo levels)
 	var efficiency_label = fleet_section.get_node_or_null("FleetEfficiency") as Label
 	if efficiency_label:
-		var efficiency = 100
-		# TODO: Calculate actual efficiency based on ship condition, upgrades, etc.
-		efficiency_label.text = "Efficiency: " + str(efficiency) + "%"
+		var fuel_efficiency = game_manager.player_data.ship.bonuses.fuel_efficiency
+		var efficiency = int(fuel_efficiency * 100)
+		efficiency_label.text = "Fuel Efficiency: " + str(efficiency) + "%"
+	
+	# Update upgrade levels
+	var upgrades_label = fleet_section.get_node_or_null("UpgradeLevels") as Label
+	if upgrades_label:
+		var upgrades = game_manager.player_data.ship.upgrades
+		upgrades_label.text = "Upgrades: Cargo(%d) Engine(%d) Scanner(%d) AI(%d)" % [
+			upgrades.cargo_hold,
+			upgrades.engine,
+			upgrades.scanner,
+			upgrades.ai_core
+		]
 
 func _update_statistics():
 	"""Update game statistics"""
@@ -300,7 +428,9 @@ func _update_statistics():
 		["Systems Explored", str(stats.systems_explored)],
 		["Distance Traveled", str(stats.distance_traveled) + " units"],
 		["Trades Completed", str(stats.trades_completed)],
-		["Total Profit", "$" + _format_number(stats.total_profit)]
+		["Total Earned", "$" + _format_number(stats.total_credits_earned)],
+		["Artifacts Found", str(stats.artifacts_found)],
+		["Playtime", _format_playtime(stats.playtime_seconds)]
 	]
 	
 	for stat_pair in stats_to_show:
@@ -329,3 +459,13 @@ func _format_number(number: int) -> String:
 		count += 1
 	
 	return formatted
+
+func _format_playtime(seconds: int) -> String:
+	"""Format playtime in hours and minutes"""
+	var hours = seconds / 3600
+	var minutes = (seconds % 3600) / 60
+	
+	if hours > 0:
+		return "%dh %dm" % [hours, minutes]
+	else:
+		return "%dm" % minutes

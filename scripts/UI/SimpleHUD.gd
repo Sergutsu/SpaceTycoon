@@ -30,7 +30,7 @@ func _ready():
 	_create_ui_elements()
 	
 	# Get game manager reference
-	game_manager = get_node("../../GameManager")
+	game_manager = get_node("../GameManager")
 	if game_manager:
 		_connect_signals()
 		_update_all_displays()
@@ -39,6 +39,11 @@ func _ready():
 		# Add welcome alert
 		add_alert("info", "Welcome to Space Transport Tycoon!", 4.0)
 		add_alert("success", "Enhanced HUD loaded successfully", 3.0)
+		
+		# Initialize MainStatusPanel if it exists
+		var status_panel = get_node("../MainStatusPanel")
+		if status_panel and status_panel.has_method("initialize"):
+			status_panel.initialize(game_manager)
 	else:
 		print("SimpleHUD: GameManager not found")
 		add_alert("error", "GameManager not found - some features may not work", 10.0)
