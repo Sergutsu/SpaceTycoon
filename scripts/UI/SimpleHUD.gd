@@ -4,26 +4,18 @@ class_name SimpleHUD
 # Simple HUD - Standalone version that doesn't require complex node structure
 # Can be used immediately without scene setup
 
-# UI Elements created dynamically
-var credits_label: Label
-var fuel_label: Label
-var cargo_label: Label
-var location_label: Label
-var alert_container: HBoxContainer
-var mini_map_placeholder: Panel
-
 # Game Manager reference
 var game_manager: GameManager
 
-# UI References - now using @onready for scene elements
+# UI References - using @onready for scene elements
 @onready var title_label: Label = $HeaderPanel/HeaderContainer/TitleLabel
-#@onready var credits_label: Label = $HeaderPanel/HeaderContainer/StatsContainer/CreditsLabel
-#@onready var fuel_label: Label = $HeaderPanel/HeaderContainer/StatsContainer/FuelLabel
-#@onready var cargo_label: Label = $HeaderPanel/HeaderContainer/StatsContainer/CargoLabel
-#@onready var location_label: Label = $HeaderPanel/HeaderContainer/StatsContainer/LocationLabel
+@onready var credits_label: Label = $HeaderPanel/HeaderContainer/StatsContainer/CreditsLabel
+@onready var fuel_label: Label = $HeaderPanel/HeaderContainer/StatsContainer/FuelLabel
+@onready var cargo_label: Label = $HeaderPanel/HeaderContainer/StatsContainer/CargoLabel
+@onready var location_label: Label = $HeaderPanel/HeaderContainer/StatsContainer/LocationLabel
 @onready var alert_bar: Panel = $AlertBar
-#@onready var alert_container: HBoxContainer = $AlertBar/AlertContainer
-#@onready var mini_map_placeholder: Panel = $MiniMapPlaceholder
+@onready var alert_container: HBoxContainer = $AlertBar/AlertContainer
+@onready var mini_map_placeholder: Panel = $MiniMapPlaceholder
 @onready var fps_label: Label = $PerformanceDisplay/FPSLabel
 @onready var trend_panel: Panel = $TrendPanel
 @onready var trend_container: VBoxContainer = $TrendPanel/TrendContainer
@@ -44,7 +36,7 @@ var frame_time_history: Array[float] = []
 func _ready():
 	print("SimpleHUD: Initializing...")
 	
-	# Set up UI elements (now using scene-based elements)
+	# Set up UI elements styling and behavior
 	_setup_ui_elements()
 	
 	# Get game manager reference
@@ -62,18 +54,27 @@ func _ready():
 		add_alert("error", "GameManager not found - some features may not work", 10.0)
 
 func _setup_ui_elements():
-	"""Set up UI elements using scene-based approach"""
-	# Apply styling to scene elements
+	"""Set up UI elements styling and behavior using scene-based approach"""
+	# Apply styling to header elements
 	title_label.add_theme_font_size_override("font_size", 18)
-	fps_label.add_theme_font_size_override("font_size", 10)
 	
-	# Set up trend title styling
+	# Style stats labels
+	credits_label.add_theme_font_size_override("font_size", 12)
+	fuel_label.add_theme_font_size_override("font_size", 12)
+	cargo_label.add_theme_font_size_override("font_size", 12)
+	location_label.add_theme_font_size_override("font_size", 12)
+	
+	# Style performance display
+	fps_label.add_theme_font_size_override("font_size", 10)
+	fps_label.modulate = Color(0.7, 0.7, 0.7, 1)
+	
+	# Set up trend panel styling
 	var trend_title = trend_container.get_child(0) as Label
 	if trend_title:
 		trend_title.add_theme_font_size_override("font_size", 10)
 		trend_title.add_theme_color_override("font_color", Color.CYAN)
 	
-	# Set up artifact title styling
+	# Set up artifact panel styling
 	var artifact_title = artifact_container.get_child(0) as Label
 	if artifact_title:
 		artifact_title.add_theme_font_size_override("font_size", 10)
@@ -142,8 +143,6 @@ func _update_all_displays():
 	_on_fuel_changed(game_manager.player_data.ship.current_fuel)
 	_on_cargo_changed(game_manager.player_data.inventory)
 	_on_location_changed(game_manager.player_data.current_system)
-
-# This method is now defined at the end of the file with trend analysis
 
 func _on_fuel_changed(new_fuel: int):
 	"""Handle fuel change"""
@@ -273,7 +272,7 @@ func _update_alert_display():
 			alert_item.setup_alert(alert)
 			alert_container.add_child(alert_item)
 
-# Removed _create_alert_widget - now using AlertItem template
+
 
 # Performance Monitoring
 var trend_update_timer: float = 0.0

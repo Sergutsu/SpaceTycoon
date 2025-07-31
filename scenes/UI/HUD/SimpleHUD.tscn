@@ -46,13 +46,22 @@ alignment = 2
 layout_mode = 2
 text = "Credits: $0"
 
+[node name="VSeparator1" type="VSeparator" parent="HeaderPanel/HeaderContainer/StatsContainer"]
+layout_mode = 2
+
 [node name="FuelLabel" type="Label" parent="HeaderPanel/HeaderContainer/StatsContainer"]
 layout_mode = 2
 text = "Fuel: 0/100"
 
+[node name="VSeparator2" type="VSeparator" parent="HeaderPanel/HeaderContainer/StatsContainer"]
+layout_mode = 2
+
 [node name="CargoLabel" type="Label" parent="HeaderPanel/HeaderContainer/StatsContainer"]
 layout_mode = 2
 text = "Cargo: 0/50"
+
+[node name="VSeparator3" type="VSeparator" parent="HeaderPanel/HeaderContainer/StatsContainer"]
+layout_mode = 2
 
 [node name="LocationLabel" type="Label" parent="HeaderPanel/HeaderContainer/StatsContainer"]
 layout_mode = 2
