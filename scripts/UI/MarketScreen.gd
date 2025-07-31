@@ -17,7 +17,7 @@ var game_manager: GameManager
 var current_system: String = ""
 var selected_good: String = "food"
 var market_data: Dictionary = {}
-var price_history: Dictionary = {}
+var price_history: Array = []
 
 # Trading state
 var trade_quantity: int = 1
