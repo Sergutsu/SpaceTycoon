@@ -449,6 +449,8 @@ func _input(event):
 		match event.keycode:
 			KEY_TAB:
 				_toggle_status_panel()
+			KEY_M:
+				_toggle_market_screen()
 
 func _toggle_status_panel():
 	"""Toggle the main status panel"""
@@ -459,6 +461,19 @@ func _toggle_status_panel():
 			add_alert("info", "Status panel opened (TAB to close)", 2.0)
 		else:
 			add_alert("info", "Status panel closed", 1.0)
+
+func _toggle_market_screen():
+	"""Toggle the market screen"""
+	var market_screen = get_node("../MarketScreen")
+	if market_screen:
+		market_screen.visible = not market_screen.visible
+		if market_screen.visible:
+			add_alert("info", "Market screen opened (M to close)", 2.0)
+			# Initialize market screen if needed
+			if market_screen.has_method("initialize") and game_manager:
+				market_screen.initialize(game_manager)
+		else:
+			add_alert("info", "Market screen closed", 1.0)
 
 # Specialized alert methods for different game events
 func add_trade_alert(good_type: String, quantity: int, profit: int, is_buying: bool):

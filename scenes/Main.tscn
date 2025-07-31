@@ -5,6 +5,7 @@
 [ext_resource type="PackedScene" uid="uid://bvx80a00a1b2c" path="res://scenes/Galaxy3DScene.tscn" id="4_galaxy3d"]
 [ext_resource type="Script" uid="uid://b31g3nfq2kr3w" path="res://scripts/ViewportController.gd" id="5_viewport"]
 [ext_resource type="PackedScene" uid="uid://main_status_panel" path="res://scenes/MainStatusPanel.tscn" id="6_status_panel"]
+[ext_resource type="PackedScene" uid="uid://market_screen" path="res://scenes/MarketScreen.tscn" id="7_market_screen"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -40,3 +41,5 @@ script = ExtResource("2_3h4kl")
 
 [node name="MainStatusPanel" parent="." instance=ExtResource("6_status_panel")]
 visible = false
+
+[node name="MarketScreen" parent="." instance=ExtResource("7_market_screen")]
