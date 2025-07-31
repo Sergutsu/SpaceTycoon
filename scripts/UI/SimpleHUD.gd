@@ -509,7 +509,7 @@ func _update_fps_display():
 	avg_frame_time /= frame_time_history.size()
 	
 	# Update display with memory usage
-	var memory_usage = OS.get_static_memory_usage_by_type()
+	var memory_usage = OS.get_memory_info()
 	var total_memory = 0
 	for usage in memory_usage.values():
 		total_memory += usage

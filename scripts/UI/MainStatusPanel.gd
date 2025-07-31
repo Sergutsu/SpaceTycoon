@@ -1,4 +1,4 @@
-extends BasePanel
+extends Control
 class_name MainStatusPanel
 
 # Main Status Panel - Detailed overview of credits, energy, materials, fleet strength
@@ -15,14 +15,21 @@ var last_credits: int = 0
 var credits_history: Array[int] = []
 var max_history_length: int = 10
 
-func _on_panel_initialize():
-	panel_title = "Status Overview"
-	can_minimize = true
-	can_close = false
+# Panel properties
+var panel_title: String = "Status Overview"
+var can_minimize: bool = true
+var can_close: bool = false
+var game_manager: GameManager
+
+func initialize(gm: GameManager):
+	"""Initialize panel with game manager reference"""
+	game_manager = gm
 	
 	# Initialize displays
 	_setup_sections()
 	_update_all_displays()
+	
+	print("MainStatusPanel: Initialized with GameManager")
 
 func _setup_sections():
 	"""Set up all status sections"""
