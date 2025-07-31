@@ -15,9 +15,8 @@ var mini_map_placeholder: Panel
 # Game Manager reference
 var game_manager: GameManager
 
-# UI Management
-var theme_manager: ThemeManager
-var state_manager: PanelStateManager
+# UI Management - removed unused managers
+# Theme and state management is now handled by UIManager
 
 # Alert system
 var active_alerts: Array[Dictionary] = []
@@ -811,3 +810,10 @@ func _show_notifications():
 	var ui_manager = get_parent() as UIManager
 	if ui_manager:
 		ui_manager.switch_to_panel_by_name("notification_center")
+
+func _quick_navigate(panel_name: String):
+	"""Quick navigation to panel through UIManager"""
+	var ui_manager = get_parent() as UIManager
+	if ui_manager:
+		ui_manager.switch_to_panel_by_name(panel_name)
+		add_alert("info", "Switched to " + panel_name.replace("_", " ").capitalize(), 1.0)
