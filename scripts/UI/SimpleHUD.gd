@@ -193,6 +193,19 @@ func _create_ui_elements():
 	artifact_title.add_theme_font_size_override("font_size", 10)
 	artifact_title.add_theme_color_override("font_color", Color.GOLD)
 	artifact_container.add_child(artifact_title)
+	
+	# Notification indicator (top right corner)
+	var notification_indicator = Button.new()
+	notification_indicator.anchors_preset = Control.PRESET_TOP_RIGHT
+	notification_indicator.offset_left = -50
+	notification_indicator.offset_top = 10
+	notification_indicator.offset_right = -10
+	notification_indicator.offset_bottom = 40
+	notification_indicator.text = "📬 0"
+	notification_indicator.name = "NotificationIndicator"
+	notification_indicator.add_theme_font_size_override("font_size", 10)
+	notification_indicator.pressed.connect(_toggle_notification_center)
+	add_child(notification_indicator)
 
 func _connect_signals():
 	"""Connect to GameManager signals"""
@@ -442,6 +455,7 @@ func _process(delta):
 		trend_update_timer = 0.0
 		_update_market_trends()
 		_update_artifact_bonuses()
+		_update_notification_indicator()
 
 func _input(event):
 	"""Handle keyboard shortcuts"""
@@ -453,6 +467,8 @@ func _input(event):
 				_toggle_market_screen()
 			KEY_F:
 				_toggle_asset_panel()
+			KEY_N:
+				_toggle_notification_center()
 
 func _toggle_status_panel():
 	"""Toggle the main status panel"""
@@ -489,6 +505,19 @@ func _toggle_asset_panel():
 				asset_panel.initialize(game_manager)
 		else:
 			add_alert("info", "Asset panel closed", 1.0)
+
+func _toggle_notification_center():
+	"""Toggle the notification center"""
+	var notification_center = get_node("../NotificationCenter")
+	if notification_center:
+		notification_center.visible = not notification_center.visible
+		if notification_center.visible:
+			add_alert("info", "Notifications opened (N to close)", 2.0)
+			# Initialize notification center if needed
+			if notification_center.has_method("initialize") and game_manager:
+				notification_center.initialize(game_manager)
+		else:
+			add_alert("info", "Notifications closed", 1.0)
 
 # Specialized alert methods for different game events
 func add_trade_alert(good_type: String, quantity: int, profit: int, is_buying: bool):
@@ -714,3 +743,19 @@ func _update_artifact_bonuses():
 			artifact_container.add_child(bonus_label)
 	
 	artifact_panel.visible = has_bonuses
+
+func _update_notification_indicator():
+	"""Update notification indicator with unread count"""
+	var indicator = get_node_or_null("NotificationIndicator")
+	if not indicator:
+		return
+	
+	var notification_center = get_node("../NotificationCenter")
+	if notification_center and notification_center.has_method("get_unread_count"):
+		var unread_count = notification_center.get_unread_count()
+		if unread_count > 0:
+			indicator.text = "📬 " + str(unread_count)
+			indicator.modulate = Color.YELLOW
+		else:
+			indicator.text = "📭 0"
+			indicator.modulate = Color.WHITE
