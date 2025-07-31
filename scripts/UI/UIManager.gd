@@ -126,10 +126,10 @@ func _connect_game_signals():
 
 func _setup_initial_layout():
 	"""Set up the initial UI layout"""
-	# Apply themes to all panels
+	# Apply themes to all panels (skip non-Control nodes)
 	for panel_name in panel_registry.keys():
 		var panel = panel_registry[panel_name]
-		if panel:
+		if panel and panel is Control:
 			apply_panel_theme(panel, "default")
 	
 	# Show essential panels that exist (without animation for initial setup)
@@ -931,9 +931,14 @@ func _suggest_panel_cleanup():
 		print("UIManager: ", suggestion_text)
 
 # Theme and Visual Polish Methods
-func apply_panel_theme(panel: Control, theme_name: String = "default"):
+func apply_panel_theme(panel: Node, theme_name: String = "default"):
 	"""Apply visual theme to a panel"""
 	if not panel:
+		return
+	
+	# Skip theme application for non-Control nodes (like 3D scenes)
+	if not panel is Control:
+		print("UIManager: Skipping theme for non-Control node: ", panel.name)
 		return
 	
 	match theme_name:
@@ -944,7 +949,7 @@ func apply_panel_theme(panel: Control, theme_name: String = "default"):
 		"minimal":
 			_apply_minimal_theme(panel)
 
-func _apply_default_theme(panel: Control):
+func _apply_default_theme(panel: Node):
 	"""Apply default theme to panel"""
 	if panel is Panel:
 		var style_box = StyleBoxFlat.new()
@@ -960,7 +965,7 @@ func _apply_default_theme(panel: Control):
 		style_box.border_color = Color.CYAN
 		panel.add_theme_stylebox_override("panel", style_box)
 
-func _apply_dark_theme(panel: Control):
+func _apply_dark_theme(panel: Node):
 	"""Apply dark theme to panel"""
 	if panel is Panel:
 		var style_box = StyleBoxFlat.new()
@@ -976,7 +981,7 @@ func _apply_dark_theme(panel: Control):
 		style_box.border_color = Color.GRAY
 		panel.add_theme_stylebox_override("panel", style_box)
 
-func _apply_minimal_theme(panel: Control):
+func _apply_minimal_theme(panel: Node):
 	"""Apply minimal theme to panel"""
 	if panel is Panel:
 		var style_box = StyleBoxFlat.new()
@@ -1221,7 +1226,7 @@ func _apply_high_contrast_theme():
 		if panel:
 			_apply_high_contrast_to_panel(panel)
 
-func _apply_high_contrast_to_panel(panel: Control):
+func _apply_high_contrast_to_panel(panel: Node):
 	"""Apply high contrast theme to a single panel"""
 	if panel is Panel:
 		var style_box = StyleBoxFlat.new()
