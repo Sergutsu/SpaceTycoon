@@ -1,7 +1,7 @@
 [gd_scene load_steps=5 format=3 uid="uid://bqxvyxqhqvhxj"]
 
 [ext_resource type="Script" uid="uid://cqnkc5o75nf4y" path="res://scripts/GameManager.gd" id="1_0k8xj"]
-[ext_resource type="Script" uid="uid://bxxpcteen6y2u" path="res://scripts/UI/SimpleMainUI.gd" id="2_3h4kl"]
+[ext_resource type="Script" path="res://scripts/UI/SimpleHUD.gd" id="2_3h4kl"]
 [ext_resource type="PackedScene" uid="uid://bvx80a00a1b2c" path="res://scenes/Galaxy3DScene.tscn" id="4_galaxy3d"]
 [ext_resource type="Script" uid="uid://b31g3nfq2kr3w" path="res://scripts/ViewportController.gd" id="5_viewport"]
 
@@ -28,7 +28,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.047, 0.047, 0.18, 1)
 
-[node name="MainUI" type="Control" parent="."]
+[node name="SimpleHUD" type="Control" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -37,46 +37,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("2_3h4kl")
 
-[node name="Header" type="Panel" parent="MainUI"]
-layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
-offset_bottom = 80.0
-grow_horizontal = 2
 
-[node name="HBoxContainer" type="HBoxContainer" parent="MainUI/Header"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 20.0
-offset_top = 10.0
-offset_right = -20.0
-offset_bottom = -10.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="Title" type="Label" parent="MainUI/Header/HBoxContainer"]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "Space Transport Tycoon"
-
-[node name="Stats" type="HBoxContainer" parent="MainUI/Header/HBoxContainer"]
-layout_mode = 2
-size_flags_horizontal = 3
-alignment = 2
-
-[node name="CreditsLabel" type="Label" parent="MainUI/Header/HBoxContainer/Stats"]
-layout_mode = 2
-text = "Credits: $10000"
-
-[node name="FuelLabel" type="Label" parent="MainUI/Header/HBoxContainer/Stats"]
-layout_mode = 2
-text = "Fuel: 100"
-
-[node name="CargoLabel" type="Label" parent="MainUI/Header/HBoxContainer/Stats"]
-layout_mode = 2
-text = "Cargo: 0/50"
 
 [node name="GameArea" type="Control" parent="MainUI"]
 layout_mode = 1
