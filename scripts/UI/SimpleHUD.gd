@@ -451,6 +451,8 @@ func _input(event):
 				_toggle_status_panel()
 			KEY_M:
 				_toggle_market_screen()
+			KEY_F:
+				_toggle_asset_panel()
 
 func _toggle_status_panel():
 	"""Toggle the main status panel"""
@@ -474,6 +476,19 @@ func _toggle_market_screen():
 				market_screen.initialize(game_manager)
 		else:
 			add_alert("info", "Market screen closed", 1.0)
+
+func _toggle_asset_panel():
+	"""Toggle the asset management panel"""
+	var asset_panel = get_node("../AssetManagementPanel")
+	if asset_panel:
+		asset_panel.visible = not asset_panel.visible
+		if asset_panel.visible:
+			add_alert("info", "Asset panel opened (F to close)", 2.0)
+			# Initialize asset panel if needed
+			if asset_panel.has_method("initialize") and game_manager:
+				asset_panel.initialize(game_manager)
+		else:
+			add_alert("info", "Asset panel closed", 1.0)
 
 # Specialized alert methods for different game events
 func add_trade_alert(good_type: String, quantity: int, profit: int, is_buying: bool):

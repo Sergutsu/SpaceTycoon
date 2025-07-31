@@ -6,6 +6,7 @@
 [ext_resource type="Script" uid="uid://b31g3nfq2kr3w" path="res://scripts/ViewportController.gd" id="5_viewport"]
 [ext_resource type="PackedScene" uid="uid://main_status_panel" path="res://scenes/MainStatusPanel.tscn" id="6_status_panel"]
 [ext_resource type="PackedScene" uid="uid://market_screen" path="res://scenes/MarketScreen.tscn" id="7_market_screen"]
+[ext_resource type="PackedScene" uid="uid://asset_management_panel" path="res://scenes/AssetManagementPanel.tscn" id="8_asset_panel"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -43,3 +44,5 @@ script = ExtResource("2_3h4kl")
 visible = false
 
 [node name="MarketScreen" parent="." instance=ExtResource("7_market_screen")]
+
+[node name="AssetManagementPanel" parent="." instance=ExtResource("8_asset_panel")]
