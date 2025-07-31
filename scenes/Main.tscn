@@ -1,15 +1,14 @@
-[gd_scene load_steps=5 format=3 uid="uid://bqxvyxqhqvhxj"]
+[gd_scene load_steps=10 format=3 uid="uid://bqxvyxqhqvhxj"]
 
 [ext_resource type="Script" uid="uid://cqnkc5o75nf4y" path="res://scripts/GameManager.gd" id="1_0k8xj"]
-[ext_resource type="Script" path="res://scripts/UI/SimpleHUD.gd" id="2_3h4kl"]
-[ext_resource type="Script" path="res://scripts/UI/UIManager.gd" id="3_ui_manager"]
+[ext_resource type="Script" uid="uid://blmaxx523t1so" path="res://scripts/UI/SimpleHUD.gd" id="2_3h4kl"]
+[ext_resource type="Script" uid="uid://cyfuefur6vquw" path="res://scripts/UI/UIManager.gd" id="3_ui_manager"]
 [ext_resource type="PackedScene" uid="uid://bvx80a00a1b2c" path="res://scenes/Galaxy3DScene.tscn" id="4_galaxy3d"]
-[ext_resource type="Script" uid="uid://b31g3nfq2kr3w" path="res://scripts/ViewportController.gd" id="5_viewport"]
-[ext_resource type="PackedScene" uid="uid://main_status_panel" path="res://scenes/MainStatusPanel.tscn" id="6_status_panel"]
-[ext_resource type="PackedScene" uid="uid://market_screen" path="res://scenes/MarketScreen.tscn" id="7_market_screen"]
-[ext_resource type="PackedScene" uid="uid://asset_management_panel" path="res://scenes/AssetManagementPanel.tscn" id="8_asset_panel"]
-[ext_resource type="PackedScene" uid="uid://notification_center" path="res://scenes/NotificationCenter.tscn" id="9_notification_center"]
-[ext_resource type="PackedScene" uid="uid://mission_log" path="res://scenes/MissionLog.tscn" id="10_mission_log"]
+[ext_resource type="PackedScene" path="res://scenes/MainStatusPanel.tscn" id="6_status_panel"]
+[ext_resource type="PackedScene" path="res://scenes/MarketScreen.tscn" id="7_market_screen"]
+[ext_resource type="PackedScene" path="res://scenes/AssetManagementPanel.tscn" id="8_asset_panel"]
+[ext_resource type="PackedScene" path="res://scenes/NotificationCenter.tscn" id="9_notification_center"]
+[ext_resource type="PackedScene" path="res://scenes/MissionLog.tscn" id="10_mission_log"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -54,15 +53,18 @@ script = ExtResource("2_3h4kl")
 
 [node name="MainStatusPanel" parent="UIManager" instance=ExtResource("6_status_panel")]
 visible = false
+layout_mode = 0
+anchors_preset = 0
 
 [node name="MarketScreen" parent="UIManager" instance=ExtResource("7_market_screen")]
-visible = false
+layout_mode = 1
 
 [node name="AssetManagementPanel" parent="UIManager" instance=ExtResource("8_asset_panel")]
-visible = false
+layout_mode = 1
 
 [node name="NotificationCenter" parent="UIManager" instance=ExtResource("9_notification_center")]
-visible = false
+layout_mode = 1
 
 [node name="MissionLog" parent="UIManager" instance=ExtResource("10_mission_log")]
 visible = false
+layout_mode = 1

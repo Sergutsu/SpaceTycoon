@@ -15,22 +15,37 @@ var mini_map_placeholder: Panel
 # Game Manager reference
 var game_manager: GameManager
 
-# UI Management - removed unused managers
-# Theme and state management is now handled by UIManager
+# UI References - now using @onready for scene elements
+@onready var title_label: Label = $HeaderPanel/HeaderContainer/TitleLabel
+#@onready var credits_label: Label = $HeaderPanel/HeaderContainer/StatsContainer/CreditsLabel
+#@onready var fuel_label: Label = $HeaderPanel/HeaderContainer/StatsContainer/FuelLabel
+#@onready var cargo_label: Label = $HeaderPanel/HeaderContainer/StatsContainer/CargoLabel
+#@onready var location_label: Label = $HeaderPanel/HeaderContainer/StatsContainer/LocationLabel
+@onready var alert_bar: Panel = $AlertBar
+#@onready var alert_container: HBoxContainer = $AlertBar/AlertContainer
+#@onready var mini_map_placeholder: Panel = $MiniMapPlaceholder
+@onready var fps_label: Label = $PerformanceDisplay/FPSLabel
+@onready var trend_panel: Panel = $TrendPanel
+@onready var trend_container: VBoxContainer = $TrendPanel/TrendContainer
+@onready var artifact_panel: Panel = $ArtifactPanel
+@onready var artifact_container: HBoxContainer = $ArtifactPanel/ArtifactContainer
+@onready var notification_indicator: Button = $NotificationIndicator
+@onready var navigation_status: Panel = $NavigationStatus
+@onready var navigation_label: Label = $NavigationStatus/NavigationLabel
+@onready var quick_navigation: HBoxContainer = $QuickNavigation
 
 # Alert system
 var active_alerts: Array[Dictionary] = []
 var max_alerts: int = 3
 
 # Performance tracking
-var fps_label: Label
 var frame_time_history: Array[float] = []
 
 func _ready():
 	print("SimpleHUD: Initializing...")
 	
-	# Create UI elements dynamically
-	_create_ui_elements()
+	# Set up UI elements (now using scene-based elements)
+	_setup_ui_elements()
 	
 	# Get game manager reference
 	game_manager = get_node("../../GameManager")
@@ -46,207 +61,45 @@ func _ready():
 		print("SimpleHUD: GameManager not found")
 		add_alert("error", "GameManager not found - some features may not work", 10.0)
 
-func _create_ui_elements():
-	"""Create UI elements dynamically"""
-	# Header panel
-	var header_panel = Panel.new()
-	header_panel.anchors_preset = Control.PRESET_TOP_WIDE
-	header_panel.offset_bottom = 80
-	add_child(header_panel)
-	
-	# Header container
-	var header_container = HBoxContainer.new()
-	header_container.anchors_preset = Control.PRESET_FULL_RECT
-	header_container.offset_left = 20
-	header_container.offset_top = 10
-	header_container.offset_right = -20
-	header_container.offset_bottom = -10
-	header_panel.add_child(header_container)
-	
-	# Game title
-	var title_label = Label.new()
-	title_label.text = "Space Transport Tycoon"
-	title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+func _setup_ui_elements():
+	"""Set up UI elements using scene-based approach"""
+	# Apply styling to scene elements
 	title_label.add_theme_font_size_override("font_size", 18)
-	header_container.add_child(title_label)
-	
-	# Stats container
-	var stats_container = HBoxContainer.new()
-	stats_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	stats_container.alignment = BoxContainer.ALIGNMENT_END
-	header_container.add_child(stats_container)
-	
-	# Credits label
-	credits_label = Label.new()
-	credits_label.text = "Credits: $0"
-	stats_container.add_child(credits_label)
-	
-	# Fuel label
-	fuel_label = Label.new()
-	fuel_label.text = "Fuel: 0/100"
-	stats_container.add_child(fuel_label)
-	
-	# Cargo label
-	cargo_label = Label.new()
-	cargo_label.text = "Cargo: 0/50"
-	stats_container.add_child(cargo_label)
-	
-	# Location label
-	location_label = Label.new()
-	location_label.text = "Location: Unknown"
-	stats_container.add_child(location_label)
-	
-	# Alert bar (below header)
-	var alert_bar = Panel.new()
-	alert_bar.anchors_preset = Control.PRESET_TOP_WIDE
-	alert_bar.offset_top = 80
-	alert_bar.offset_bottom = 110
-	alert_bar.visible = false  # Only show when there are alerts
-	alert_bar.name = "AlertBar"
-	add_child(alert_bar)
-	
-	alert_container = HBoxContainer.new()
-	alert_container.anchors_preset = Control.PRESET_FULL_RECT
-	alert_container.offset_left = 10
-	alert_container.offset_right = -10
-	alert_container.offset_top = 5
-	alert_container.offset_bottom = -5
-	alert_bar.add_child(alert_container)
-	
-	# Mini-map placeholder (bottom right)
-	mini_map_placeholder = Panel.new()
-	mini_map_placeholder.anchors_preset = Control.PRESET_BOTTOM_RIGHT
-	mini_map_placeholder.offset_left = -200
-	mini_map_placeholder.offset_top = -150
-	mini_map_placeholder.offset_right = -10
-	mini_map_placeholder.offset_bottom = -10
-	mini_map_placeholder.name = "MiniMap"
-	add_child(mini_map_placeholder)
-	
-	# Mini-map label
-	var minimap_label = Label.new()
-	minimap_label.text = "Mini-Map\n(Coming Soon)"
-	minimap_label.anchors_preset = Control.PRESET_CENTER
-	minimap_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	minimap_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	mini_map_placeholder.add_child(minimap_label)
-	
-	# Performance display (bottom left)
-	fps_label = Label.new()
-	fps_label.anchors_preset = Control.PRESET_BOTTOM_LEFT
-	fps_label.offset_left = 10
-	fps_label.offset_top = -50
-	fps_label.offset_right = 150
-	fps_label.offset_bottom = -30
-	fps_label.text = "FPS: --"
 	fps_label.add_theme_font_size_override("font_size", 10)
-	fps_label.modulate = Color(0.7, 0.7, 0.7)
-	add_child(fps_label)
 	
-	# Resource trend indicators (bottom left, above FPS)
-	var trend_panel = Panel.new()
-	trend_panel.anchors_preset = Control.PRESET_BOTTOM_LEFT
-	trend_panel.offset_left = 10
-	trend_panel.offset_top = -120
-	trend_panel.offset_right = 200
-	trend_panel.offset_bottom = -55
-	trend_panel.name = "TrendPanel"
-	add_child(trend_panel)
+	# Set up trend title styling
+	var trend_title = trend_container.get_child(0) as Label
+	if trend_title:
+		trend_title.add_theme_font_size_override("font_size", 10)
+		trend_title.add_theme_color_override("font_color", Color.CYAN)
 	
-	var trend_container = VBoxContainer.new()
-	trend_container.anchors_preset = Control.PRESET_FULL_RECT
-	trend_container.offset_left = 5
-	trend_container.offset_right = -5
-	trend_container.offset_top = 5
-	trend_container.offset_bottom = -5
-	trend_panel.add_child(trend_container)
+	# Set up artifact title styling
+	var artifact_title = artifact_container.get_child(0) as Label
+	if artifact_title:
+		artifact_title.add_theme_font_size_override("font_size", 10)
+		artifact_title.add_theme_color_override("font_color", Color.GOLD)
 	
-	var trend_title = Label.new()
-	trend_title.text = "Market Trends"
-	trend_title.add_theme_font_size_override("font_size", 10)
-	trend_title.add_theme_color_override("font_color", Color.CYAN)
-	trend_container.add_child(trend_title)
-	
-	# Artifact bonus indicators (top right, below stats)
-	var artifact_panel = Panel.new()
-	artifact_panel.anchors_preset = Control.PRESET_TOP_RIGHT
-	artifact_panel.offset_left = -220
-	artifact_panel.offset_top = 85
-	artifact_panel.offset_right = -10
-	artifact_panel.offset_bottom = 140
-	artifact_panel.name = "ArtifactPanel"
-	artifact_panel.visible = false  # Only show when artifacts are active
-	add_child(artifact_panel)
-	
-	var artifact_container = HBoxContainer.new()
-	artifact_container.anchors_preset = Control.PRESET_FULL_RECT
-	artifact_container.offset_left = 5
-	artifact_container.offset_right = -5
-	artifact_container.offset_top = 5
-	artifact_container.offset_bottom = -5
-	artifact_panel.add_child(artifact_container)
-	
-	var artifact_title = Label.new()
-	artifact_title.text = "Active Bonuses: "
-	artifact_title.add_theme_font_size_override("font_size", 10)
-	artifact_title.add_theme_color_override("font_color", Color.GOLD)
-	artifact_container.add_child(artifact_title)
-	
-	# Notification indicator (top right corner)
-	var notification_indicator = Button.new()
-	notification_indicator.anchors_preset = Control.PRESET_TOP_RIGHT
-	notification_indicator.offset_left = -50
-	notification_indicator.offset_top = 10
-	notification_indicator.offset_right = -10
-	notification_indicator.offset_bottom = 40
-	notification_indicator.text = "📬 0"
-	notification_indicator.name = "NotificationIndicator"
+	# Set up notification indicator
 	notification_indicator.add_theme_font_size_override("font_size", 10)
 	notification_indicator.pressed.connect(_show_notifications)
-	add_child(notification_indicator)
 	
-	# Navigation status (top center)
-	var nav_status = Panel.new()
-	nav_status.anchors_preset = Control.PRESET_TOP_WIDE
-	nav_status.offset_left = 200
-	nav_status.offset_right = -200
-	nav_status.offset_top = 10
-	nav_status.offset_bottom = 35
-	nav_status.name = "NavigationStatus"
-	nav_status.visible = false  # Only show when navigating
-	add_child(nav_status)
-	
-	# Style navigation status
+	# Set up navigation status styling
 	var nav_style = StyleBoxFlat.new()
 	nav_style.bg_color = Color(0.1, 0.1, 0.3, 0.8)
 	nav_style.corner_radius_top_left = 5
 	nav_style.corner_radius_top_right = 5
 	nav_style.corner_radius_bottom_left = 5
 	nav_style.corner_radius_bottom_right = 5
-	nav_status.add_theme_stylebox_override("panel", nav_style)
+	navigation_status.add_theme_stylebox_override("panel", nav_style)
 	
-	var nav_label = Label.new()
-	nav_label.name = "NavigationLabel"
-	nav_label.anchors_preset = Control.PRESET_FULL_RECT
-	nav_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	nav_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	nav_label.text = "Current Panel: Main"
-	nav_label.add_theme_font_size_override("font_size", 10)
-	nav_label.add_theme_color_override("font_color", Color.CYAN)
-	nav_status.add_child(nav_label)
+	navigation_label.add_theme_font_size_override("font_size", 10)
+	navigation_label.add_theme_color_override("font_color", Color.CYAN)
 	
-	# Quick navigation buttons (bottom center)
-	var quick_nav = HBoxContainer.new()
-	quick_nav.anchors_preset = Control.PRESET_BOTTOM_WIDE
-	quick_nav.offset_left = 300
-	quick_nav.offset_right = -300
-	quick_nav.offset_top = -40
-	quick_nav.offset_bottom = -10
-	quick_nav.name = "QuickNavigation"
-	quick_nav.alignment = BoxContainer.ALIGNMENT_CENTER
-	add_child(quick_nav)
-	
-	# Add quick navigation buttons
+	# Create quick navigation buttons using templates
+	_create_quick_nav_buttons()
+
+func _create_quick_nav_buttons():
+	"""Create quick navigation buttons using scene templates"""
 	var nav_buttons = [
 		["TAB", "Status", "main_status_panel"],
 		["M", "Market", "market_screen"],
@@ -256,12 +109,11 @@ func _create_ui_elements():
 	]
 	
 	for button_data in nav_buttons:
-		var nav_button = Button.new()
-		nav_button.text = button_data[0] + "\n" + button_data[1]
-		nav_button.custom_minimum_size = Vector2(50, 30)
-		nav_button.add_theme_font_size_override("font_size", 8)
-		nav_button.pressed.connect(_quick_navigate.bind(button_data[2]))
-		quick_nav.add_child(nav_button)
+		var nav_button = UITemplates.create_quick_nav_button()
+		if nav_button:
+			nav_button.setup_button(button_data[0], button_data[1], button_data[2])
+			nav_button.panel_requested.connect(_quick_navigate)
+			quick_navigation.add_child(nav_button)
 
 func _connect_signals():
 	"""Connect to GameManager signals"""
@@ -403,99 +255,25 @@ func _remove_alert_by_data(alert_data: Dictionary):
 		_remove_alert(index)
 
 func _update_alert_display():
-	"""Update the visual alert display"""
+	"""Update the visual alert display using scene templates"""
 	if not alert_container:
 		return
 	
 	# Show/hide alert bar based on alerts
-	var alert_bar = get_node("AlertBar")
-	if alert_bar:
-		alert_bar.visible = active_alerts.size() > 0
+	alert_bar.visible = active_alerts.size() > 0
 	
 	# Clear existing alert widgets
 	for child in alert_container.get_children():
 		child.queue_free()
 	
-	# Create alert widgets
+	# Create alert widgets using templates
 	for alert in active_alerts:
-		var alert_widget = _create_alert_widget(alert)
-		alert_container.add_child(alert_widget)
+		var alert_item = UITemplates.create_alert_item()
+		if alert_item:
+			alert_item.setup_alert(alert)
+			alert_container.add_child(alert_item)
 
-func _create_alert_widget(alert_data: Dictionary) -> Control:
-	"""Create a visual widget for an alert"""
-	var alert_panel = Panel.new()
-	alert_panel.custom_minimum_size = Vector2(250, 30)
-	
-	# Style based on alert type with enhanced visuals
-	var style_box = StyleBoxFlat.new()
-	var icon_text = ""
-	
-	match alert_data.type:
-		"warning":
-			style_box.bg_color = Color(1.0, 0.6, 0.0, 0.9)  # Orange
-			icon_text = "⚠ "
-		"error":
-			style_box.bg_color = Color(0.8, 0.2, 0.2, 0.9)  # Red
-			icon_text = "❌ "
-		"info":
-			style_box.bg_color = Color(0.2, 0.6, 1.0, 0.9)  # Blue
-			icon_text = "ℹ "
-		"success":
-			style_box.bg_color = Color(0.2, 0.8, 0.2, 0.9)  # Green
-			icon_text = "✓ "
-		"trade":
-			style_box.bg_color = Color(0.8, 0.6, 0.2, 0.9)  # Gold
-			icon_text = "💰 "
-		"travel":
-			style_box.bg_color = Color(0.4, 0.2, 0.8, 0.9)  # Purple
-			icon_text = "🚀 "
-		"discovery":
-			style_box.bg_color = Color(0.8, 0.4, 0.8, 0.9)  # Magenta
-			icon_text = "🔍 "
-		_:
-			style_box.bg_color = Color(0.5, 0.5, 0.5, 0.9)  # Gray
-			icon_text = "• "
-	
-	# Enhanced styling
-	style_box.corner_radius_top_left = 8
-	style_box.corner_radius_top_right = 8
-	style_box.corner_radius_bottom_left = 8
-	style_box.corner_radius_bottom_right = 8
-	style_box.border_width_left = 2
-	style_box.border_width_right = 2
-	style_box.border_width_top = 2
-	style_box.border_width_bottom = 2
-	style_box.border_color = Color.WHITE
-	alert_panel.add_theme_stylebox_override("panel", style_box)
-	
-	# Add alert content container
-	var content_container = HBoxContainer.new()
-	content_container.anchors_preset = Control.PRESET_FULL_RECT
-	content_container.offset_left = 8
-	content_container.offset_right = -8
-	content_container.offset_top = 4
-	content_container.offset_bottom = -4
-	alert_panel.add_child(content_container)
-	
-	# Add alert text with icon
-	var alert_label = Label.new()
-	alert_label.text = icon_text + alert_data.message
-	alert_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	alert_label.add_theme_color_override("font_color", Color.WHITE)
-	alert_label.add_theme_font_size_override("font_size", 11)
-	alert_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	content_container.add_child(alert_label)
-	
-	# Add timestamp for longer alerts
-	if alert_data.duration > 3.0:
-		var time_label = Label.new()
-		time_label.text = alert_data.timestamp.substr(0, 5)  # HH:MM
-		time_label.add_theme_color_override("font_color", Color(1, 1, 1, 0.7))
-		time_label.add_theme_font_size_override("font_size", 9)
-		time_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		content_container.add_child(time_label)
-	
-	return alert_panel
+# Removed _create_alert_widget - now using AlertItem template
 
 # Performance Monitoring
 var trend_update_timer: float = 0.0

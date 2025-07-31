@@ -1054,11 +1054,14 @@ func _enable_panel_dragging():
 	"""Enable drag-and-drop for all panels"""
 	for panel_name in panel_registry.keys():
 		var panel = panel_registry[panel_name]
-		if panel and panel != hud:  # Don't make HUD draggable
+		if panel and panel != hud and panel is Control:  # Don't make HUD or 3D scenes draggable
 			_make_panel_draggable(panel)
 
 func _make_panel_draggable(panel: Control):
 	"""Make a panel draggable"""
+	if not panel:
+		return
+	
 	if panel.has_meta("is_draggable"):
 		return  # Already draggable
 	

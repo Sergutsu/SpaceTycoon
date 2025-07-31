@@ -1,0 +1,5 @@
+# Components directory for reusable UI templates
+# This directory will contain scene templates for dynamic content like:
+# - MarketItem.tscn
+# - NotificationItem.tscn  
+# - MissionItem.tscn

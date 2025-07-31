@@ -4,6 +4,7 @@
 - **Game Engine**: Godot 4.4
 - **Programming Language**: GDScript
 - **Architecture**: Scene-based with signal-driven communication
+- UI elements MUST  BE created using Godot's scene-based approach. Not by programming in scripts!
 - **Platform Target**: Desktop (Windows, Linux, macOS) with potential mobile export
 
 ## Technology Choices Rationale
@@ -23,20 +24,10 @@ F5 or Play button in editor
 # Export builds
 Project -> Export -> Select platform
 ```
-
-## File Organization
-```
-SpaceTycoon/
-├── project.godot           # Project configuration
-├── scenes/                 # Scene files (.tscn)
-│   └── Main.tscn          # Main game scene
-├── scripts/               # GDScript files (.gd)
-│   ├── GameManager.gd     # Core game logic and state
-│   └── UI/                # UI-specific scripts
-│       ├── MainUI.gd      # Main interface controller
-│       └── GalaxyMap.gd   # Galaxy map visualization
-└── JSPrototype/           # Original web prototype (reference)
-```
+## Project Structure
+- **Scenes**: Game logic and UI elements
+- **Scripts**: Game logic and UI scripts
+- **Resources**: Game assets and data
 
 ## Code Standards
 - **GDScript**: Follow Godot style guide, use snake_case for variables/functions

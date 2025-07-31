@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3 uid="uid://quick_nav_button"]
+
+[ext_resource type="Script" path="res://scripts/UI/Components/QuickNavButton.gd" id="1_quick_nav_button"]
+
+[node name="QuickNavButton" type="Button"]
+custom_minimum_size = Vector2(50, 30)
+text = "TAB
+Status"
+script = ExtResource("1_quick_nav_button")

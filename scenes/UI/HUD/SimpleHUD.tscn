@@ -1,0 +1,247 @@
+[gd_scene load_steps=2 format=3 uid="uid://simple_hud"]
+
+[ext_resource type="Script" path="res://scripts/UI/SimpleHUD.gd" id="1_simple_hud"]
+
+[node name="SimpleHUD" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_simple_hud")
+
+[node name="HeaderPanel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -1.0
+offset_bottom = 80.0
+grow_horizontal = 0
+
+[node name="HeaderContainer" type="HBoxContainer" parent="HeaderPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 10.0
+offset_right = -20.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TitleLabel" type="Label" parent="HeaderPanel/HeaderContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Space Transport Tycoon"
+
+[node name="StatsContainer" type="HBoxContainer" parent="HeaderPanel/HeaderContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+alignment = 2
+
+[node name="CreditsLabel" type="Label" parent="HeaderPanel/HeaderContainer/StatsContainer"]
+layout_mode = 2
+text = "Credits: $0"
+
+[node name="FuelLabel" type="Label" parent="HeaderPanel/HeaderContainer/StatsContainer"]
+layout_mode = 2
+text = "Fuel: 0/100"
+
+[node name="CargoLabel" type="Label" parent="HeaderPanel/HeaderContainer/StatsContainer"]
+layout_mode = 2
+text = "Cargo: 0/50"
+
+[node name="LocationLabel" type="Label" parent="HeaderPanel/HeaderContainer/StatsContainer"]
+layout_mode = 2
+text = "Location: Unknown"
+
+[node name="AlertBar" type="Panel" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -1.0
+offset_top = 80.0
+offset_bottom = 110.0
+grow_horizontal = 0
+
+[node name="AlertContainer" type="HBoxContainer" parent="AlertBar"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 5.0
+offset_right = -10.0
+offset_bottom = -5.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MiniMapPlaceholder" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -200.0
+offset_top = -150.0
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 0
+grow_vertical = 0
+
+[node name="MiniMapLabel" type="Label" parent="MiniMapPlaceholder"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "Mini-Map
+(Coming Soon)"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PerformanceDisplay" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = -50.0
+offset_right = 150.0
+offset_bottom = -30.0
+grow_vertical = 0
+
+[node name="FPSLabel" type="Label" parent="PerformanceDisplay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 5.0
+offset_top = 2.0
+offset_right = -5.0
+offset_bottom = -2.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "FPS: --"
+modulate = Color(0.7, 0.7, 0.7, 1)
+
+[node name="TrendPanel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = -120.0
+offset_right = 200.0
+offset_bottom = -55.0
+grow_vertical = 0
+
+[node name="TrendContainer" type="VBoxContainer" parent="TrendPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 5.0
+offset_top = 5.0
+offset_right = -5.0
+offset_bottom = -5.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TrendTitle" type="Label" parent="TrendPanel/TrendContainer"]
+layout_mode = 2
+text = "Market Trends"
+modulate = Color(0, 1, 1, 1)
+
+[node name="ArtifactPanel" type="Panel" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -220.0
+offset_top = 85.0
+offset_right = -10.0
+offset_bottom = 140.0
+grow_horizontal = 0
+
+[node name="ArtifactContainer" type="HBoxContainer" parent="ArtifactPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 5.0
+offset_top = 5.0
+offset_right = -5.0
+offset_bottom = -5.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ArtifactTitle" type="Label" parent="ArtifactPanel/ArtifactContainer"]
+layout_mode = 2
+text = "Active Bonuses: "
+modulate = Color(1, 0.843137, 0, 1)
+
+[node name="NotificationIndicator" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -50.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = 40.0
+grow_horizontal = 0
+text = "📬 0"
+
+[node name="NavigationStatus" type="Panel" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -400.0
+offset_top = 10.0
+offset_right = -200.0
+offset_bottom = 35.0
+grow_horizontal = 0
+
+[node name="NavigationLabel" type="Label" parent="NavigationStatus"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "Current Panel: Main"
+horizontal_alignment = 1
+vertical_alignment = 1
+modulate = Color(0, 1, 1, 1)
+
+[node name="QuickNavigation" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -150.0
+offset_top = -40.0
+offset_right = 150.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 0
+alignment = 1
