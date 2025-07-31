@@ -4,6 +4,7 @@
 [ext_resource type="Script" path="res://scripts/UI/SimpleHUD.gd" id="2_3h4kl"]
 [ext_resource type="PackedScene" uid="uid://bvx80a00a1b2c" path="res://scenes/Galaxy3DScene.tscn" id="4_galaxy3d"]
 [ext_resource type="Script" uid="uid://b31g3nfq2kr3w" path="res://scripts/ViewportController.gd" id="5_viewport"]
+[ext_resource type="PackedScene" uid="uid://main_status_panel" path="res://scenes/MainStatusPanel.tscn" id="6_status_panel"]
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -36,6 +37,9 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("2_3h4kl")
+
+[node name="MainStatusPanel" parent="." instance=ExtResource("6_status_panel")]
+visible = false
 
 
 

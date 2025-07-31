@@ -1,0 +1,103 @@
+[gd_scene load_steps=2 format=3 uid="uid://main_status_panel"]
+
+[ext_resource type="Script" path="res://scripts/UI/MainStatusPanel.gd" id="1_main_status"]
+
+[node name="MainStatusPanel" type="Panel"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -250.0
+offset_right = 300.0
+offset_bottom = 250.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_main_status")
+
+[node name="TitleBar" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 30.0
+grow_horizontal = 2
+
+[node name="Title" type="Label" parent="TitleBar"]
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 10.0
+offset_top = -11.5
+offset_right = 150.0
+offset_bottom = 11.5
+grow_vertical = 2
+text = "Status Overview"
+
+[node name="MinimizeButton" type="Button" parent="TitleBar"]
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -60.0
+offset_top = -10.0
+offset_right = -35.0
+offset_bottom = 10.0
+grow_horizontal = 0
+grow_vertical = 2
+text = "_"
+
+[node name="CloseButton" type="Button" parent="TitleBar"]
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = -30.0
+offset_top = -10.0
+offset_right = -5.0
+offset_bottom = 10.0
+grow_horizontal = 0
+grow_vertical = 2
+text = "X"
+
+[node name="ContentArea" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 30.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ScrollContainer" type="ScrollContainer" parent="ContentArea"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ContentArea/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CreditsSection" type="VBoxContainer" parent="ContentArea/ScrollContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="FleetSection" type="VBoxContainer" parent="ContentArea/ScrollContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="MaterialsSection" type="VBoxContainer" parent="ContentArea/ScrollContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="StatisticsSection" type="VBoxContainer" parent="ContentArea/ScrollContainer/VBoxContainer"]
+layout_mode = 2

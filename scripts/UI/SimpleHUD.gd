@@ -335,6 +335,23 @@ func _process(_delta):
 	"""Update performance metrics"""
 	_update_fps_display()
 
+func _input(event):
+	"""Handle keyboard shortcuts"""
+	if event is InputEventKey and event.pressed:
+		match event.keycode:
+			KEY_TAB:
+				_toggle_status_panel()
+
+func _toggle_status_panel():
+	"""Toggle the main status panel"""
+	var status_panel = get_node("../MainStatusPanel")
+	if status_panel:
+		status_panel.visible = not status_panel.visible
+		if status_panel.visible:
+			add_alert("info", "Status panel opened (TAB to close)", 2.0)
+		else:
+			add_alert("info", "Status panel closed", 1.0)
+
 func _update_fps_display():
 	"""Update FPS and performance display"""
 	if not fps_label:
