@@ -4,6 +4,10 @@ class_name UIManager
 # UI Manager - Central controller for all UI panels following MVC architecture
 # Based on views.md specification
 
+# Import advanced UI components
+const PanelDockingSystem = preload("res://scripts/UI/PanelDockingSystem.gd")
+const DataExportUtility = preload("res://scripts/UI/DataExportUtility.gd")
+
 # Panel References - only reference existing panels
 @onready var hud: Control = get_node_or_null("HUD")
 @onready var main_status_panel: Control = get_node_or_null("MainStatusPanel")
@@ -21,6 +25,12 @@ var active_panel: Control
 var panel_stack: Array[Control] = []
 var panel_history: Array[String] = []
 var max_history_length: int = 10
+
+# Advanced features
+var docking_system: PanelDockingSystem
+var accessibility_enabled: bool = false
+var high_contrast_mode: bool = false
+var ui_scale: float = 1.0
 
 # Panel visibility states
 enum PanelState {
@@ -144,6 +154,9 @@ func _setup_initial_layout():
 	
 	# Set initial active panel
 	active_panel = main_status_panel if main_status_panel else hud
+	
+	# Initialize advanced features
+	_initialize_advanced_features()
 	
 	# Initial performance optimization
 	_optimize_panel_performance()
@@ -318,6 +331,36 @@ func _input(event):
 						_switch_to_previous_panel()
 					else:
 						_switch_to_next_panel()
+					return
+				KEY_A:
+					if event.alt_pressed:
+						enable_accessibility_mode(not accessibility_enabled)
+					else:
+						auto_arrange_panels()
+					return
+				KEY_C:
+					cascade_panels()
+					return
+				KEY_G:
+					enable_snap_to_grid(not docking_system.snap_to_grid if docking_system else false)
+					return
+				KEY_H:
+					enable_high_contrast_mode(not high_contrast_mode)
+					return
+				KEY_EQUAL:  # Ctrl + = (zoom in)
+					set_ui_scale(ui_scale + 0.1)
+					return
+				KEY_MINUS:  # Ctrl + - (zoom out)
+					set_ui_scale(ui_scale - 0.1)
+					return
+				KEY_0:  # Ctrl + 0 (reset zoom)
+					set_ui_scale(1.0)
+					return
+				KEY_E:  # Ctrl + E (export)
+					if event.shift_pressed:
+						quick_export_comprehensive()
+					else:
+						quick_export_panel_states()
 					return
 		
 		# Handle navigation shortcuts
@@ -698,9 +741,26 @@ func _create_help_overlay():
 		["Ctrl+Tab", "Next panel"],
 		["Ctrl+Shift+Tab", "Previous panel"],
 		["", ""],
+		["Layout & Docking:", ""],
+		["Drag panel", "Move and dock panels"],
+		["Ctrl+A", "Auto-arrange panels"],
+		["Ctrl+C", "Cascade panels"],
+		["Ctrl+G", "Toggle snap-to-grid"],
+		["", ""],
+		["Accessibility:", ""],
+		["Ctrl+Alt+A", "Toggle accessibility mode"],
+		["Ctrl+H", "Toggle high contrast"],
+		["Ctrl + =", "Zoom in"],
+		["Ctrl + -", "Zoom out"],
+		["Ctrl + 0", "Reset zoom"],
+		["", ""],
+		["Data Export:", ""],
+		["Ctrl + E", "Export panel states"],
+		["Ctrl + Shift + E", "Export comprehensive data"],
+		["", ""],
 		["Panel Controls:", ""],
 		["Click title", "Focus panel"],
-		["Drag title", "Move panel"],
+		["Drag panel", "Move and dock"],
 		["Double-click", "Minimize/restore"],
 		["Right-click", "Panel context menu"]
 	]
@@ -965,3 +1025,412 @@ func print_performance_stats():
 	print("  Minimized panels: ", minimized_count)
 	print("  Total panels: ", panel_states.size())
 	print("  Navigation stack depth: ", panel_stack.size())
+
+# Advanced Features Implementation
+func _initialize_advanced_features():
+	"""Initialize advanced UI features"""
+	# Initialize docking system
+	docking_system = PanelDockingSystem.new()
+	docking_system.name = "PanelDockingSystem"
+	add_child(docking_system)
+	docking_system.initialize(self)
+	
+	# Connect docking signals
+	docking_system.panel_docked.connect(_on_panel_docked)
+	docking_system.panel_undocked.connect(_on_panel_undocked)
+	docking_system.layout_changed.connect(_on_layout_changed)
+	
+	# Enable drag-and-drop for all panels
+	_enable_panel_dragging()
+	
+	print("UIManager: Advanced features initialized")
+
+func _enable_panel_dragging():
+	"""Enable drag-and-drop for all panels"""
+	for panel_name in panel_registry.keys():
+		var panel = panel_registry[panel_name]
+		if panel and panel != hud:  # Don't make HUD draggable
+			_make_panel_draggable(panel)
+
+func _make_panel_draggable(panel: Control):
+	"""Make a panel draggable"""
+	if panel.has_meta("is_draggable"):
+		return  # Already draggable
+	
+	# Add drag detection
+	panel.gui_input.connect(_on_panel_input.bind(panel))
+	panel.set_meta("is_draggable", true)
+	panel.set_meta("drag_start_pos", Vector2.ZERO)
+	panel.set_meta("is_being_dragged", false)
+	
+	print("UIManager: Made panel draggable: ", panel.name)
+
+func _on_panel_input(event: InputEvent, panel: Control):
+	"""Handle panel input for dragging"""
+	if not event is InputEventMouse:
+		return
+	
+	var mouse_event = event as InputEventMouse
+	
+	if event is InputEventMouseButton:
+		var button_event = event as InputEventMouseButton
+		
+		if button_event.button_index == MOUSE_BUTTON_LEFT:
+			if button_event.pressed:
+				# Start potential drag
+				panel.set_meta("drag_start_pos", button_event.global_position)
+				panel.set_meta("drag_start_panel_pos", panel.global_position)
+			else:
+				# End drag if dragging
+				if panel.get_meta("is_being_dragged", false):
+					docking_system.end_panel_drag(button_event.global_position)
+					panel.set_meta("is_being_dragged", false)
+	
+	elif event is InputEventMouseMotion:
+		var motion_event = event as InputEventMouseMotion
+		
+		# Check if we should start dragging
+		if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and not panel.get_meta("is_being_dragged", false):
+			var drag_start = panel.get_meta("drag_start_pos", Vector2.ZERO)
+			var distance = motion_event.global_position.distance_to(drag_start)
+			
+			if distance > 10:  # Drag threshold
+				panel.set_meta("is_being_dragged", true)
+				docking_system.start_panel_drag(panel, panel.global_position)
+		
+		# Update drag if dragging
+		if panel.get_meta("is_being_dragged", false):
+			docking_system.update_panel_drag(motion_event.global_position)
+
+func _on_panel_docked(panel: Control, dock_zone: String):
+	"""Handle panel docked event"""
+	print("UIManager: Panel docked - ", panel.name, " to ", dock_zone)
+	
+	# Update panel state
+	if panel_states.has(panel):
+		panel_states[panel] = PanelState.VISIBLE
+	
+	# Add resize handles for docked panels
+	docking_system.add_resize_handles(panel)
+
+func _on_panel_undocked(panel: Control):
+	"""Handle panel undocked event"""
+	print("UIManager: Panel undocked - ", panel.name)
+	
+	# Remove resize handles
+	docking_system.remove_resize_handles(panel)
+
+func _on_layout_changed():
+	"""Handle layout change event"""
+	print("UIManager: Layout changed")
+	
+	# Auto-save layout
+	auto_save_panel_states()
+
+# Accessibility Features
+func enable_accessibility_mode(enabled: bool):
+	"""Enable or disable accessibility features"""
+	accessibility_enabled = enabled
+	
+	if enabled:
+		_apply_accessibility_enhancements()
+	else:
+		_remove_accessibility_enhancements()
+	
+	print("UIManager: Accessibility mode ", "enabled" if enabled else "disabled")
+
+func _apply_accessibility_enhancements():
+	"""Apply accessibility enhancements"""
+	# Increase font sizes
+	for panel_name in panel_registry.keys():
+		var panel = panel_registry[panel_name]
+		if panel:
+			_enhance_panel_accessibility(panel)
+
+func _enhance_panel_accessibility(panel: Control):
+	"""Enhance a single panel for accessibility"""
+	# Find all labels and increase font size
+	var labels = _find_all_labels(panel)
+	for label in labels:
+		var current_size = label.get_theme_font_size("font_size")
+		if current_size == 0:
+			current_size = 12  # Default size
+		label.add_theme_font_size_override("font_size", int(current_size * 1.2))
+	
+	# Find all buttons and enhance
+	var buttons = _find_all_buttons(panel)
+	for button in buttons:
+		button.custom_minimum_size = Vector2(button.custom_minimum_size.x, max(button.custom_minimum_size.y, 40))
+
+func _find_all_labels(node: Node) -> Array[Label]:
+	"""Recursively find all Label nodes"""
+	var labels: Array[Label] = []
+	
+	if node is Label:
+		labels.append(node)
+	
+	for child in node.get_children():
+		labels.append_array(_find_all_labels(child))
+	
+	return labels
+
+func _find_all_buttons(node: Node) -> Array[Button]:
+	"""Recursively find all Button nodes"""
+	var buttons: Array[Button] = []
+	
+	if node is Button:
+		buttons.append(node)
+	
+	for child in node.get_children():
+		buttons.append_array(_find_all_buttons(child))
+	
+	return buttons
+
+func _remove_accessibility_enhancements():
+	"""Remove accessibility enhancements"""
+	for panel_name in panel_registry.keys():
+		var panel = panel_registry[panel_name]
+		if panel:
+			_remove_panel_accessibility(panel)
+
+func _remove_panel_accessibility(panel: Control):
+	"""Remove accessibility enhancements from a panel"""
+	var labels = _find_all_labels(panel)
+	for label in labels:
+		label.remove_theme_font_size_override("font_size")
+	
+	var buttons = _find_all_buttons(panel)
+	for button in buttons:
+		button.custom_minimum_size = Vector2.ZERO
+
+func enable_high_contrast_mode(enabled: bool):
+	"""Enable or disable high contrast mode"""
+	high_contrast_mode = enabled
+	
+	if enabled:
+		_apply_high_contrast_theme()
+	else:
+		_remove_high_contrast_theme()
+	
+	print("UIManager: High contrast mode ", "enabled" if enabled else "disabled")
+
+func _apply_high_contrast_theme():
+	"""Apply high contrast theme to all panels"""
+	for panel_name in panel_registry.keys():
+		var panel = panel_registry[panel_name]
+		if panel:
+			_apply_high_contrast_to_panel(panel)
+
+func _apply_high_contrast_to_panel(panel: Control):
+	"""Apply high contrast theme to a single panel"""
+	if panel is Panel:
+		var style_box = StyleBoxFlat.new()
+		style_box.bg_color = Color.BLACK
+		style_box.border_width_left = 3
+		style_box.border_width_right = 3
+		style_box.border_width_top = 3
+		style_box.border_width_bottom = 3
+		style_box.border_color = Color.WHITE
+		panel.add_theme_stylebox_override("panel", style_box)
+	
+	# Update text colors
+	var labels = _find_all_labels(panel)
+	for label in labels:
+		label.add_theme_color_override("font_color", Color.WHITE)
+
+func _remove_high_contrast_theme():
+	"""Remove high contrast theme"""
+	for panel_name in panel_registry.keys():
+		var panel = panel_registry[panel_name]
+		if panel:
+			apply_panel_theme(panel, "default")  # Revert to default theme
+
+# UI Scaling
+func set_ui_scale(scale: float):
+	"""Set UI scale factor"""
+	ui_scale = clamp(scale, 0.5, 2.0)
+	_apply_ui_scale()
+	
+	print("UIManager: UI scale set to ", ui_scale)
+
+func _apply_ui_scale():
+	"""Apply UI scale to all panels"""
+	for panel_name in panel_registry.keys():
+		var panel = panel_registry[panel_name]
+		if panel:
+			panel.scale = Vector2(ui_scale, ui_scale)
+
+# Layout Presets for Advanced Features
+func save_advanced_layout_preset(preset_name: String):
+	"""Save advanced layout preset including docking"""
+	var preset_data = save_panel_states()
+	
+	# Add docking information
+	if docking_system:
+		preset_data["docking_layout"] = docking_system.save_layout()
+	
+	# Add advanced settings
+	preset_data["accessibility_enabled"] = accessibility_enabled
+	preset_data["high_contrast_mode"] = high_contrast_mode
+	preset_data["ui_scale"] = ui_scale
+	
+	if not has_meta("advanced_layout_presets"):
+		set_meta("advanced_layout_presets", {})
+	
+	var presets = get_meta("advanced_layout_presets")
+	presets[preset_name] = preset_data
+	set_meta("advanced_layout_presets", presets)
+	
+	print("UIManager: Advanced layout preset '%s' saved" % preset_name)
+
+func load_advanced_layout_preset(preset_name: String) -> bool:
+	"""Load advanced layout preset"""
+	if not has_meta("advanced_layout_presets"):
+		return false
+	
+	var presets = get_meta("advanced_layout_presets")
+	if not presets.has(preset_name):
+		return false
+	
+	var preset_data = presets[preset_name]
+	
+	# Restore basic panel states
+	restore_panel_states(preset_data)
+	
+	# Restore docking layout
+	if preset_data.has("docking_layout") and docking_system:
+		docking_system.load_layout(preset_data["docking_layout"])
+	
+	# Restore advanced settings
+	if preset_data.has("accessibility_enabled"):
+		enable_accessibility_mode(preset_data["accessibility_enabled"])
+	
+	if preset_data.has("high_contrast_mode"):
+		enable_high_contrast_mode(preset_data["high_contrast_mode"])
+	
+	if preset_data.has("ui_scale"):
+		set_ui_scale(preset_data["ui_scale"])
+	
+	print("UIManager: Advanced layout preset '%s' loaded" % preset_name)
+	return true
+
+# Quick layout actions
+func auto_arrange_panels():
+	"""Auto-arrange all panels"""
+	if docking_system:
+		docking_system.auto_arrange_panels()
+
+func cascade_panels():
+	"""Cascade all panels"""
+	if docking_system:
+		docking_system.cascade_panels()
+
+func enable_snap_to_grid(enabled: bool, grid_size: int = 20):
+	"""Enable snap-to-grid for panel positioning"""
+	if docking_system:
+		docking_system.enable_snap_to_grid(enabled, grid_size)
+
+# Data export functionality
+func export_panel_data_to_json() -> String:
+	"""Export panel data to JSON format"""
+	var export_data = {
+		"timestamp": Time.get_datetime_string_from_system(),
+		"panel_states": save_panel_states(),
+		"docking_layout": docking_system.save_layout() if docking_system else {},
+		"settings": {
+			"accessibility_enabled": accessibility_enabled,
+			"high_contrast_mode": high_contrast_mode,
+			"ui_scale": ui_scale
+		}
+	}
+	
+	return JSON.stringify(export_data)
+
+func import_panel_data_from_json(json_string: String) -> bool:
+	"""Import panel data from JSON format"""
+	var json = JSON.new()
+	var parse_result = json.parse(json_string)
+	
+	if parse_result != OK:
+		print("UIManager: Failed to parse JSON data")
+		return false
+	
+	var data = json.data
+	
+	# Import panel states
+	if data.has("panel_states"):
+		restore_panel_states(data["panel_states"])
+	
+	# Import docking layout
+	if data.has("docking_layout") and docking_system:
+		docking_system.load_layout(data["docking_layout"])
+	
+	# Import settings
+	if data.has("settings"):
+		var settings = data["settings"]
+		if settings.has("accessibility_enabled"):
+			enable_accessibility_mode(settings["accessibility_enabled"])
+		if settings.has("high_contrast_mode"):
+			enable_high_contrast_mode(settings["high_contrast_mode"])
+		if settings.has("ui_scale"):
+			set_ui_scale(settings["ui_scale"])
+	
+	print("UIManager: Panel data imported from JSON")
+	return true
+
+# Data Export Methods
+func export_panel_states_to_csv() -> String:
+	"""Export panel states to CSV format"""
+	var panel_states = save_panel_states()
+	return DataExportUtility.export_panel_states_to_csv(panel_states)
+
+func export_game_data_to_csv() -> String:
+	"""Export game statistics to CSV format"""
+	return DataExportUtility.export_game_statistics_to_csv(game_manager)
+
+func export_market_data_to_csv() -> String:
+	"""Export market data to CSV format"""
+	return DataExportUtility.export_market_data_to_csv(game_manager)
+
+func export_comprehensive_data() -> Dictionary:
+	"""Export comprehensive game and UI data"""
+	return DataExportUtility.export_comprehensive_game_data(game_manager, self)
+
+func save_export_to_file(data: String, filename: String):
+	"""Save export data to file"""
+	var timestamp = DataExportUtility.get_export_timestamp()
+	var safe_filename = DataExportUtility.sanitize_filename(filename)
+	var full_filename = "export_%s_%s" % [timestamp, safe_filename]
+	
+	var file = FileAccess.open("user://" + full_filename, FileAccess.WRITE)
+	if file:
+		file.store_string(data)
+		file.close()
+		print("UIManager: Export saved to user://" + full_filename)
+		
+		# Show notification if notification center exists
+		if notification_center and notification_center.has_method("add_notification"):
+			notification_center.add_notification("Export saved to " + full_filename, "info")
+	else:
+		print("UIManager: Failed to save export file")
+		
+		# Show error notification
+		if notification_center and notification_center.has_method("add_notification"):
+			notification_center.add_notification("Failed to save export file", "error")
+
+# Quick export actions
+func quick_export_panel_states():
+	"""Quick export of panel states to CSV"""
+	var csv_data = export_panel_states_to_csv()
+	save_export_to_file(csv_data, "panel_states.csv")
+
+func quick_export_game_data():
+	"""Quick export of game data to CSV"""
+	var csv_data = export_game_data_to_csv()
+	save_export_to_file(csv_data, "game_data.csv")
+
+func quick_export_comprehensive():
+	"""Quick export of comprehensive data to JSON"""
+	var comprehensive_data = export_comprehensive_data()
+	var json_data = JSON.stringify(comprehensive_data, "\t")
+	save_export_to_file(json_data, "comprehensive_export.json")
