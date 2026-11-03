@@ -1,97 +1,82 @@
 # SpaceTycoon — Game Design Document
 
-**Version:** 0.1 — Working Prototype (WP)  
+**Version:** 0.2.1 — Expanded Working Prototype  
 **Platform:** Modern desktop and mobile browsers  
-**Delivery:** Static HTML/CSS/JS, no backend required  
-**Language:** Russian UI, English code and documentation  
-**Status:** Implemented prototype scope described in this document
+**Delivery:** Static HTML/CSS/JS, no backend or build step  
+**Language:** Russian UI, English code identifiers  
+**Status:** Implemented expanded prototype scope
 
 ---
 
 ## 1. High Concept
 
-SpaceTycoon is a compact orbital shipyard tycoon. The player runs a small commercial space station, designs and builds ships, accepts orbital contracts, manages a fleet, and reinvests revenue into station upgrades.
+SpaceTycoon is an orbital shipyard tycoon. The player operates the station «Аврора», designs and builds ships, fulfills contracts, manages crew and station infrastructure, researches technologies, trades resources, and expands influence across the Solar System.
 
-The existing procedural ship builder is preserved as the visual and technical centerpiece. Instead of being only a sandbox, generated ships become functional economic units with cargo, science, combat, speed, and durability ratings.
+The procedural 3D ship builder remains the signature feature: ship geometry and equipment are not cosmetic only, they feed into economic stats and construction cost.
 
 ### Design pillars
 
-1. **Design matters** — ship geometry and equipment choices influence contract performance.
-2. **Readable tycoon loop** — build, assign, wait, resolve, upgrade.
-3. **Fast prototype sessions** — missions resolve in seconds/minutes, not hours.
-4. **Self-contained web delivery** — the prototype runs from a static server or local files.
-5. **Builder-first identity** — the 3D ship builder remains the signature feature.
+1. **Design matters** — hull size, engines, weapons, sensors, and crew affect contract performance.
+2. **Connected systems** — fuel, energy, wages, research, reputation, and market prices influence each other.
+3. **Readable tycoon loop** — build → assign → resolve → reinvest → expand.
+4. **Builder-first identity** — the same Earth/stars visual language is used across every view.
+5. **Static web delivery** — no backend, no external runtime CDN, local saves.
 
 ---
 
-## 2. Target Experience
+## 2. Views
 
-The player should feel like the operator of a growing orbital shipyard:
+| View | Purpose |
+|---|---|
+| Обзор | KPIs, active missions, production, next objective, station log |
+| Орбитальная карта | Sector unlock state, routes, active mission lines, sector contracts |
+| Контракты | Generated contract board, filters, requirements, rewards, assignment |
+| Флот | Ship cards, stats, condition, crew, repair, rename, sell, refit |
+| Верфь | Quick-build catalog, custom builder, build/refit queue, drydock |
+| Станция | Module levels, energy balance, production, upgrade drones |
+| Экипаж | Roster, candidates, assignment, training, rest, morale, salaries |
+| Исследования | Four tech branches, prerequisites, active research |
+| Рынок | Alloy/fuel prices, buy/sell, daily limits, auto-supply |
+| Финансы | Daily cashflow chart, ledger, CSV export, net worth |
+| Репутация | Faction standing, perks, achievements, history |
+| Настройки | Background quality, sound, notifications, autosave, import/export/reset |
 
-- Start with one utility ship and a small budget.
-- Accept low-risk transport or survey contracts.
-- Build specialized ships for better-paying contracts.
-- Balance fleet condition, contract risk, and station upgrades.
-- Unlock higher-tier contracts by upgrading the shipyard.
-
-The prototype is not a full simulation. It is a playable economic loop built around the ship builder.
+All views share a persistent WebGL orbital background: Earth surface/normal/specular/cloud maps, atmospheric rim, star field, and subtle rotation. The background can be set to high, low, or off.
 
 ---
 
 ## 3. Core Loop
 
 ```text
-Accept contract
+Accept contract → assign ship + crew + fuel → mission timer
       ↓
-Assign suitable ship
+Success/failure resolution → rewards, wear, reputation, faction standing
       ↓
-Mission runs in real time
+Repair / build / refit / upgrade station / research / trade
       ↓
-Success / failure resolution
-      ↓
-Earn credits, alloy, research, reputation
-      ↓
-Repair, build, upgrade
-      ↓
-Harder contracts
+Unlock sectors, ship classes, and higher-tier contracts
 ```
 
 ### Secondary loops
 
-- **Fleet loop:** build → specialize → maintain → sell/replace.
-- **Station loop:** invest resources → improve income, success chance, capacity, and contract tier.
-- **Design loop:** open builder → customize ship → save design to hangar → use it in contracts.
+- **Fleet:** build → specialize → crew → maintain → refit → sell/replace.
+- **Station:** invest → improve capacity/production/energy → support larger operations.
+- **Science:** research → unlock classes/sectors/bonuses → harder contracts.
+- **Economy:** production + contracts + market → cashflow → wages/upkeep → reinvestment.
+- **Diplomacy:** faction reputation → perks → better rewards/costs/intel.
 
 ---
 
-## 4. Working Prototype Scope
+## 4. Time and Simulation
 
-### Included
-
-- Single-page HTML game shell.
-- Russian UI with dark glassmorphism styling.
-- Resources: credits, alloy, research, reputation.
-- Starter ship and quick-build preset ships.
-- Custom ship construction through the embedded 3D builder.
-- Contract board with generated contracts.
-- Mission assignment, progress, and resolution.
-- Ship condition, repair, and sale.
-- Station upgrades.
-- Passive station production.
-- Local save/load, autosave, export/import, and reset.
-- Offline progress catch-up, capped to avoid excessive simulation.
-- Event log and toast notifications.
-- Pause and simulation speed controls.
-
-### Not included in WP
-
-- Real-time tactical combat.
-- Multiplayer or backend accounts.
-- Persistent galaxy map.
-- Complex crew management.
-- Fuel, oxygen, or life-support simulation.
-- Full manufacturing chains.
-- WordPress packaging. “WP” in this milestone means **working prototype**.
+- 1 real second at 1× = 10 orbital minutes.
+- 1 orbital day = 144 real seconds at 1×.
+- Speeds: pause, 1×, 2×, 4×.
+- Production cycle: every 10 simulated seconds.
+- Contract board refill: every 30 simulated seconds, up to 8 offers.
+- Random events: every 150–240 simulated seconds.
+- Daily reset: wages/upkeep, market prices/limits, idle crew morale recovery.
+- Offline catch-up: capped at 8 hours, simulated in 5-second steps.
 
 ---
 
@@ -99,321 +84,282 @@ Harder contracts
 
 | Resource | Purpose | Sources |
 |---|---|---|
-| Credits | Build ships, repairs, upgrades, contract refresh | Contracts, station income, ship sales |
-| Alloy | Ship construction and repairs | Contracts, refinery, salvage |
-| Research | Advanced upgrades and higher-tier progression | Science contracts, laboratory |
-| Reputation | Contract quality and progression gating | Successful contracts |
+| Credits | Construction, repairs, upgrades, hiring, market, research | Contracts, station trade, sales, events, achievements |
+| Alloy | Ships, repairs, modules | Contracts, refinery, market |
+| Fuel | Mission launch cost | Market, fuel synthesizer, some rewards |
+| Research | Technologies, training, advanced modules | Science contracts, laboratory, achievements |
+| Reputation | Sector unlocks, contract quality, achievements | Successful contracts |
 
-### Starting resources
-
-- Credits: 3,000
-- Alloy: 150
-- Research: 0
-- Reputation: 0
-- Shipyard level: 1
-- One starter utility ship
+Starting resources: 4,200 credits, 180 alloy, 100 fuel, 20 research, 0 reputation. Starter ship «Пионер» and one captain.
 
 ---
 
 ## 6. Ships
 
-### Ship attributes
+### Presets
 
-Each ship has:
-
-- Name
-- Class/preset
-- Seed and design parameters
-- Cargo rating
-- Science rating
-- Combat rating
-- Speed rating
-- Durability rating
-- Condition, 0–100%
-- Status: idle, mission, or repair
-- Lifetime missions and earnings
-
-### Preset roles
-
-| Preset | Role | Strengths | Weaknesses |
-|---|---|---|---|
-| Исследователь | Science / utility | Science, balanced speed | Low combat and cargo |
-| Грузовоз | Freight | Cargo, durability | Low speed and combat |
-| Перехватчик | Escort / rapid response | Speed, combat | Low cargo |
-| Дредноут | Heavy combat | Combat, durability | Expensive, slow |
-| Био-корабль | Exotic research | Science, speed | Fragile, expensive |
-| Рейдер | Irregular operations | Speed, combat | Low cargo and science |
-
-### Derived stats
-
-Custom ships derive ratings from builder parameters:
-
-- Cargo increases with hull volume and wingspan.
-- Combat increases with turrets and engine count.
-- Science increases with scanners, antennas, and surface detail.
-- Speed increases with engines and plasma intensity, but decreases with hull size.
-- Durability increases with segments, metalness, and hull cross-section.
-
-Stats are clamped to a readable range and combined with preset role bonuses.
-
-### Construction cost
-
-Custom ship cost is based on:
-
-- Base shipyard fee
-- Total derived rating
-- Hull volume
-- Weapon count
-- Model complexity
-
-Quick-build presets use fixed costs for prototype readability.
-
-### Condition and repair
-
-- Successful missions cause minor wear.
-- Failed missions cause heavier wear.
-- Ships below 20% condition must be repaired before assignment.
-- Repair cost scales with missing condition and ship value.
-- Drydock upgrades reduce repair cost.
-
----
-
-## 7. Contracts
-
-### Contract types
-
-| Type | Primary stat | Typical rewards |
+| Preset | Role | Unlock |
 |---|---|---|
-| Грузоперевозка | Cargo | Credits, alloy |
-| Научная миссия | Science | Credits, research |
-| Патруль / escort | Combat | Credits, reputation |
-| Разведка | Speed + science | Credits, research, reputation |
-| Спасательные работы | Durability + cargo | Credits, alloy, reputation |
+| Исследователь | Science/utility | Start |
+| Грузовоз | Freight | Start |
+| Перехватчик | Escort/rapid response | Start |
+| Дредноут | Heavy combat | Военная доктрина |
+| Био-корабль | Exotic science | Ксенобиология |
+| Рейдер | Irregular operations | Нестандартные операции |
 
-### Contract fields
+### Stats
 
-- Title
-- Type
-- Tier
-- Primary requirement
-- Speed requirement
-- Duration
-- Risk
-- Rewards
-- Expiration/refresh behavior
+Cargo, Science, Combat, Speed, Durability. Derived from builder parameters:
 
-### Success chance
+- Cargo: hull volume, wingspan.
+- Combat: turrets, engines.
+- Science: scanners, antennas, surface detail.
+- Speed: engines, plasma glow, hull size penalties.
+- Durability: segments, metalness, cross-section.
 
-The prototype uses a transparent heuristic:
+Effective stats include technology multipliers and crew role bonuses.
 
-```text
-chance = base
-       + primaryStatAdvantage
-       + speedAdvantage
-       + missionControlBonus
-       - contractRisk
-```
+### Ship lifecycle
 
-Clamped between 15% and 95%.
+- Statuses: idle, mission, repair, refit.
+- Condition 0–100%; below 25% cannot launch.
+- Success wear: light; failure wear: heavy; engineer crew reduces wear.
+- Repair: queued in drydock, cost scales with missing condition and ship value.
+- Sale: 35% of value scaled by condition; crew returns to station.
+- Refit: opens builder with existing design, costs 35% of full custom build, preserves ship identity/crew/history.
 
-The UI shows the estimated chance for the currently selected ship before assignment.
+### Construction
 
-### Resolution
-
-On success:
-
-- Full rewards
-- Reputation gain
-- Minor condition loss
-- Ship experience/earnings tracked
-
-On failure:
-
-- No full reward
-- Small reputation penalty
-- Heavy condition loss
-- Log entry explaining the outcome
+- Quick-build: fixed preset cost/time.
+- Custom: cost from derived stats, hull volume, turrets, triangle count.
+- Build queue slots: `1 + floor(yard / 2)`.
+- Completed ship waits if hangar is full.
+- Cancel build/refit: 70% refund.
 
 ---
 
-## 8. Station Upgrades
+## 7. Contracts and Missions
 
-| Upgrade | Effect |
+Types: cargo, science, combat/escort, survey, rescue. Each contract has:
+
+- Tier, sector, faction, primary stat requirement, speed requirement.
+- Duration, risk, fuel requirement, rewards, expiration.
+
+Success chance:
+
+```text
+0.55
++ (primaryStat - req) * 0.009
++ (speed - speedReq) * 0.004
++ controlLevel * 0.04
++ captainBonus
++ tech/event bonuses
+- risk
++ (condition - 100) * 0.002
+```
+
+Clamped to 15–95%. No captain gives −8%.
+
+Mission resolution:
+
+- Success: rewards, ship experience/earnings, global reputation, faction standing, crew morale loss.
+- Failure: heavier wear, −1 reputation, −1 faction standing, larger morale loss.
+- Fuel is consumed at launch.
+
+---
+
+## 8. Sectors
+
+| Sector | Unlock |
 |---|---|
-| Верфь | Increases fleet capacity and unlocks higher contract tiers |
-| Сухой док | Reduces repair costs and construction costs |
-| Центр управления | Increases mission success chance |
-| Переработчик | Produces alloy over time |
-| Лаборатория | Produces research over time |
-| Торговый модуль | Produces credits over time |
+| Орбита Земли | Start |
+| Лунная верфь | Yard 1, reputation 8 |
+| Марсианский коридор | Yard 2, Дальняя навигация |
+| Пояс астероидов | Yard 3, reputation 35 |
+| Юпитерианская система | Yard 4, Дальний космос |
+| Дальний рубеж | Yard 5, Слипстрим, reputation 90 |
 
-Upgrade costs increase with level. Most upgrades cap at level 5 in the prototype.
-
----
-
-## 9. Time and Simulation
-
-- The game advances in real time.
-- Speed controls: pause, 1×, 2×, 4×.
-- Mission durations are prototype-scale, usually 30–150 seconds at 1×.
-- Passive production is accumulated continuously.
-- Contract board refreshes periodically and can be refreshed manually for credits.
-- Offline progress is simulated on load, capped at 8 hours.
+Distance multiplies duration, fuel, and rewards. Relay modules and navigation technologies reduce mission time.
 
 ---
 
-## 10. User Interface
+## 9. Station Modules
 
-### Layout
+| Module | Effect |
+|---|---|
+| Верфь | Contract tier, build speed, queue slots |
+| Ангар | Fleet capacity: `2 + level*2` |
+| Сухой док | Repair/build discount, repair slots/speed |
+| Центр управления | Mission success chance |
+| Переработчик | Alloy production |
+| Лаборатория | Research production, research speed |
+| Торговый узел | Passive credits |
+| Солнечные панели | Energy supply |
+| Жилой модуль | Crew capacity |
+| Топливный синтезатор | Fuel production |
+| Навигационный релей | Mission duration reduction |
 
-Desktop:
+Energy:
 
-- Top bar: brand, resources, station clock, speed controls, save/menu actions.
-- Left column: contract board.
-- Center column: hangar and active missions.
-- Right column: station upgrades and event log.
+- Supply: `20 + solar*18`.
+- Demand: sum of module energy costs × levels.
+- Efficiency: `min(1, supply/demand)`, applied to production.
 
-Mobile:
-
-- Stacked sections.
-- Compact resource bar.
-- Full-screen builder modal.
-
-### Builder integration
-
-The builder is preserved as `builder.html`.
-
-The game opens it in an iframe with `?embed=1`. In embedded mode the builder shows a **“Сохранить в ангар”** action. The builder sends a `postMessage` payload containing:
-
-- Ship name
-- Preset/class
-- Seed
-- Design parameters
-- Model statistics
-- Bounding dimensions
-
-The game validates the message, derives gameplay stats, checks capacity and resources, then adds the ship to the hangar.
-
-### Feedback
-
-- Toasts for construction, mission results, upgrades, errors, and saves.
-- Event log for recent station history.
-- Progress bars for active missions.
-- Condition bars for ships.
-- Disabled states with reasons where practical.
+Module upgrades are queued and handled by construction drones. Max level 5, except hangar/solar/habitat max 8. Level 4+ requires yard level 2.
 
 ---
 
-## 11. Save System
+## 10. Crew
 
-Save data is stored in `localStorage` under a versioned key.
+Roles:
 
-Saved state includes:
+| Role | Main bonus |
+|---|---|
+| Капитан | Mission chance, speed |
+| Инженер | Durability, wear reduction |
+| Пилот | Speed, combat |
+| Учёный | Science |
 
-- Resources
-- Station time
-- Ships
-- Contracts
-- Active missions
-- Upgrade levels
-- Event log
-- Selected ship
-- Simulation speed
-- Last saved timestamp
+Crew have skill, morale, salary, status, and ship assignment.
 
-The prototype supports:
-
-- Autosave
-- Manual save
-- Export save as JSON
-- Import save from JSON
-- Reset with confirmation
-
-Save migration is versioned. Invalid or incompatible saves fall back to a new game with a warning.
+- Hiring costs credits; candidates refresh after hire.
+- Training costs credits + research, increases skill.
+- Rest restores morale.
+- Morale scales role bonuses.
+- Salaries are paid daily.
+- Ships have preset crew slots.
 
 ---
 
-## 12. Technical Architecture
+## 11. Research
 
-### Files
+Four branches: Engineering, Logistics, Science, Economy. Twelve technologies with prerequisites. Research consumes credits/research, takes time, and only one project runs at a time. Cancel refunds 50%.
+
+Technology effects include stat multipliers, build speed, fuel use, mission time, income, production, rewards, and unlocks for ship classes/sectors.
+
+---
+
+## 12. Market and Finance
+
+Market resources: alloy and fuel.
+
+- Prices fluctuate daily via deterministic wave.
+- Buy/sell spread.
+- Daily trade limit: 150 units per resource.
+- Lunar faction discount reduces alloy buy price.
+- Industrial boom event raises alloy sell price.
+- Auto-supply buys fuel when stock < 20 and credits > 600.
+
+Finance:
+
+- Every resource delta is recorded in a ledger.
+- Daily aggregates: income, expenses, missions, production.
+- Net worth includes credits, stock, fleet condition-adjusted value, and module residual value.
+- CSV export for ledger.
+
+Daily upkeep:
+
+- Crew salaries.
+- Station upkeep: `sum(moduleLevels)*2 + ships*3`.
+
+---
+
+## 13. Factions, Events, Achievements
+
+Factions: Terran Alliance, Lunar Consortium, Helios Corp, Frontier Coalition. Standing 0–200; every 25 points grants a perk level, capped at 20%.
+
+Perks:
+
+- Terran: contract credit rewards.
+- Lunar: alloy purchase discount.
+- Helios: research production.
+- Frontier: mission duration reduction.
+
+Events: solar flare, market boom, distress call, grant, quiet shift. Events can modify production/chance/prices, add special contracts, or grant credits.
+
+Achievements reward first contract, fleet size, custom build, earnings, research, station development, exploration, and reputation. Rewards are claimed once.
+
+---
+
+## 14. Save System
+
+- Save key: `spacetycoon-save-v2`.
+- Legacy key `spacetycoon-wp-v1` migrates automatically.
+- Autosave every 15 seconds; manual save; JSON export/import.
+- Import validates and sanitizes known IDs, numeric ranges, arrays, and references.
+- Offline catch-up resolves missions, queues, production, events, and daily upkeep.
+
+Save schema v2 includes:
 
 ```text
-index.html     SpaceTycoon working prototype
-builder.html   Preserved procedural 3D ship builder
-docs/GDD.md    This design document
-README.md      Run instructions and project overview
+version, time, speed, rng, lastSaved
+resources, modules, settings, metrics, factions, market
+ships, crew, candidates
+contracts, missions, history
+buildQueue, repairQueue, moduleQueue, research, techs
+events, ledger, daily, log, claimed
 ```
 
-### Game shell
+---
 
-- Vanilla HTML/CSS/JS.
-- No framework or build step.
-- State object plus render functions.
-- Interval-based simulation tick.
-- DOM rendering with escaped user-facing strings.
-- localStorage persistence.
+## 15. Architecture
 
-### Builder
+Static modules loaded by `index.html`:
 
-- Existing Three.js r128 single-file app.
-- Embedded distributions and Earth textures.
-- Added minimal embedded-mode bridge for sending ship designs to the parent game.
+```text
+data.js            Static definitions and balance
+engine.js          Simulation/economy/save logic, no DOM rendering
+ui.js              Icons, schematics, formatters, charts
+views.js           View renderers and modal content
+app.js             Shell, navigation, lifecycle, input, builder bridge
+morphdom.min.js    Local MIT DOM patching library
+orbit-background.js Persistent WebGL background
+builder.html       Embedded procedural ship builder
+```
 
-### Security and robustness
+### UI update strategy
 
-- Builder messages are validated by type and schema.
-- Imported saves are validated before replacing state.
-- User-visible strings are escaped.
-- No backend, credentials, or network APIs are required.
+The simulation tick runs every 250 ms, but it does not redraw the whole screen. High-frequency values (clock, top-bar resources, mission/queue timers, progress bars) are updated in place through `data-time` / `data-progress` hooks. A lightweight state signature detects structural or economic changes; only then is the current view re-rendered, and the new HTML is applied with `morphdom` so existing DOM nodes, focus, scroll position, and uncontrolled input values are preserved. The view entrance animation runs only when navigating to a different view, not on live updates.
+
+Builder bridge:
+
+- Game opens `builder.html?embed=1` in an iframe.
+- Builder posts `spacetycoon:builder-ready` and `spacetycoon:ship-design`.
+- Game can post `spacetycoon:load-design` for refit.
+- Messages are accepted only from the expected iframe window and origin.
+- Design payload includes preset, params, statistics, bounds, and name.
 
 ---
 
-## 13. Balancing Targets
+## 16. Acceptance Criteria
 
-Prototype targets:
+Implemented and verified:
 
-- First contract completes within 1 minute.
-- Player can afford a second cheap ship after 2–3 successful contracts.
-- Shipyard level 2 is reachable within 5–10 minutes.
-- Failures are punishing but not run-ending.
-- Higher-tier contracts require specialized ships or upgrades.
-
-Balancing constants are centralized in the game script for easy iteration.
-
----
-
-## 14. Acceptance Criteria
-
-The working prototype is complete when:
-
-1. Old Godot/JS prototype files are removed.
-2. The ship builder remains usable as `builder.html`.
-3. `index.html` launches a playable SpaceTycoon prototype.
-4. The player can build or design a ship.
-5. The player can accept and complete a contract.
-6. Rewards, condition, and resources update correctly.
-7. Upgrades can be purchased and affect gameplay.
-8. The game saves and loads locally.
-9. The builder can send a custom ship into the game.
-10. The UI is Russian and visually consistent with the builder.
+- All navigation views render without errors.
+- Shared orbital background loads local Earth textures.
+- Contracts can be assigned and resolved.
+- Quick build, custom build, refit, repair, and sale work.
+- Module upgrades and research complete.
+- Crew hire/assign/move/train works without duplicate assignment.
+- Market buy/sell and daily limits work.
+- Achievements can be claimed once.
+- Save/reload persists expanded state.
+- Legacy v1 saves migrate.
+- Invalid imports are rejected/sanitized.
+- Offline catch-up produces a summary.
+- Mobile layout has no horizontal overflow at 390px.
+- Zero external runtime requests in browser smoke test.
 
 ---
 
-## 15. Future Roadmap
+## 17. Roadmap
 
-### Next milestone
+Possible next steps:
 
-- Ship refitting from saved designs.
-- More contract chains and faction reputation.
-- Shipyard construction queue.
-- Better offline summary.
-- Sound and music toggles.
-
-### Later
-
-- Sector map and route planning.
-- Crew and module slots.
-- Manufacturing chains.
-- Fleet combat simulation.
-- Cloud saves.
-- WordPress embedding, if requested later.
+- Persistent mission routes with intermediate waypoints.
+- Deeper manufacturing chains and resource deposits.
+- Ship insurance, loans, and company milestones.
+- Tactical contract mini-resolutions.
+- More sectors, faction quest chains, and rare blueprints.
+- Cloud saves and achievements backend.
+- Balance pass based on longer play sessions.

@@ -1,47 +1,79 @@
-# SpaceTycoon — Orbital Shipyard Working Prototype
+# SpaceTycoon — Орбитальная верфь
 
-SpaceTycoon is a browser-based orbital shipyard tycoon. This repository has been reset to a clean HTML working prototype built around the existing procedural 3D ship builder.
+Расширенный рабочий прототип браузерного тайкуна: вы управляете орбитальной станцией, проектируете корабли во встроенном 3D-конструкторе, выполняете контракты, развиваете флот, экипаж, станцию, науку, торговлю и репутацию.
 
-## Files
+Интерфейс полностью на русском языке. Бэкенд и сборка не требуются.
 
-| File | Purpose |
-|---|---|
-| `index.html` | SpaceTycoon working prototype: contracts, fleet, missions, upgrades, saves |
-| `builder.html` | Preserved standalone 3D procedural spaceship builder |
-| `docs/GDD.md` | Game design document for the working prototype |
+## Запуск
 
-## Run
-
-Serve the repository root with any static server:
+Из корня репозитория:
 
 ```bash
 python -m http.server 8000 --bind 0.0.0.0
 ```
 
-Then open:
+Откройте <http://localhost:8000/>.
 
-- Game: `http://localhost:8000/`
-- Standalone builder: `http://localhost:8000/builder.html`
+Рекомендуется запускать через локальный HTTP-сервер. Все ресурсы игры локальные; внешних CDN-запросов нет.
 
-The game also works from local files in most modern browsers, but a local server is recommended for iframe builder integration.
+## Файлы
 
-## Working prototype loop
+| Файл | Назначение |
+|---|---|
+| `index.html` | Оболочка игры: навигация, ресурсы, модальные окна, подключение модулей |
+| `builder.html` | Автономный процедурный 3D-конструктор кораблей «Орбиталь» с мостом в игру |
+| `assets/style.css` | Тёмная стеклянная тема, адаптивная сетка, карточки, карта, панели |
+| `assets/data.js` | Баланс и справочники: классы, сектора, фракции, модули, технологии, события, достижения |
+| `assets/engine.js` | Симуляция, экономика, очереди, миссии, экипаж, рынок, сохранения и миграция v1 → v2 |
+| `assets/ui.js` | SVG-иконки, схемы кораблей/станции, форматирование, графики |
+| `assets/views.js` | Renderer-ы всех экранов и содержимое модальных окон |
+| `assets/app.js` | Маршрутизация, жизненный цикл, ввод, настройки, мост конструктора, точечное обновление DOM |
+| `assets/morphdom.min.js` | Локальная DOM-морфинг-библиотека (MIT) для обновления интерфейса без мерцания |
+| `assets/orbit-background.js` | Единый WebGL-фон: Земля, облака, атмосфера, звёзды |
+| `assets/three.r128.min.js` | Three.js r128 (MIT), локальная копия для фона |
+| `assets/earth-*.{jpg,png}` | Карты Земли NASA Blue Marble из примеров Three.js r128 |
+| `docs/GDD.md` | Дизайн-документ расширенного прототипа |
 
-1. Select a ship in the hangar.
-2. Assign it to a contract.
-3. Wait for the mission to resolve.
-4. Earn credits, alloy, research, and reputation.
-5. Repair, build, or design ships.
-6. Upgrade the station to unlock harder contracts.
+## Экраны
 
-## Builder integration
+- **Обзор** — сводка, активные миссии, производство, цели, журнал.
+- **Орбитальная карта** — сектора, маршруты, условия открытия, контракты сектора.
+- **Контракты** — фильтры по типу и сектору, требования, награды, риск, назначение корабля.
+- **Флот** — карточки кораблей, характеристики, состояние, экипаж, ремонт, продажа, переименование, модернизация.
+- **Верфь** — серийные проекты, авторский 3D-конструктор, очередь стапелей, сухой док.
+- **Станция** — 11 модулей, энергетический баланс, производство, строительные дроны.
+- **Экипаж** — найм, назначение, обучение, отдых, мораль, зарплаты.
+- **Исследования** — 4 ветки, 12 технологий, предварительные требования, активное исследование.
+- **Рынок** — сплав и топливо, дневные цены, лимиты сделок, автоснабжение.
+- **Финансы** — денежные потоки, график по дням, журнал операций, экспорт CSV.
+- **Репутация** — 4 фракции, привилегии, достижения, история станции.
+- **Настройки** — качество фона, звук, уведомления, автосохранение, экспорт/импорт, сброс.
 
-The game opens `builder.html?embed=1` in a modal. In embedded mode the builder shows **Сохранить в ангар**. The design is sent to the game with `postMessage`, converted into gameplay stats, and built if the player has enough resources and hangar capacity.
+## Управление
 
-## Saves
+- Левая панель — переключение экранов; на мобильных открывается кнопкой меню.
+- `Ⅱ / 1× / 2× / 4×` — пауза и скорость симуляции.
+- `Пробел` — пауза/продолжить, `H` или `?` — руководство, `Esc` — закрыть окно/меню.
+- Конструктор открывается с верфи или из карточки корабля для модернизации.
+- В конструкторе настройте корпус и системы, затем нажмите **«Сохранить в ангар»** — проект встанет в очередь постройки/модернизации.
 
-Progress is stored in `localStorage`. The game supports manual save, autosave, JSON export/import, and reset.
+## Сохранения
 
-## Scope
+- Автосохранение каждые 15 секунд в `localStorage`.
+- Ключ расширенной версии: `spacetycoon-save-v2`.
+- Старое сохранение `spacetycoon-wp-v1` переносится автоматически.
+- Экспорт/импорт JSON доступен в настройках.
+- Оффлайн-прогресс ограничен 8 часами: обрабатываются миссии, очереди, производство, события и содержание.
 
-This is a working prototype, not the old Godot project. The previous Godot/JS prototype files were removed. WordPress packaging is not part of this milestone; “WP” means working prototype.
+## Игровой цикл
+
+1. Возьмите контракт и назначьте подходящий корабль с экипажем и топливом.
+2. Дождитесь результата; успех зависит от характеристик, состояния, риска, экипажа, станции и технологий.
+3. Получите кредиты, сплав, исследования, репутацию и отношения с фракциями.
+4. Стройте и модернизируйте корабли, ремонтируйте флот, улучшайте модули станции.
+5. Исследуйте технологии, открывайте новые классы и сектора, торгуйте ресурсами.
+6. Следите за энергией, зарплатами, содержанием и денежным потоком.
+
+## Статус прототипа
+
+Это рабочий прототип, а не финальная игра. Баланс упрощён, миссии разрешаются вероятностно, тактического боя и мультиплеера нет. Цель текущей версии — связанный экономический цикл и полноценная навигация по всем основным системам тайкуна.

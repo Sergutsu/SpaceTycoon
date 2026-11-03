@@ -2341,6 +2341,28 @@
         send({ type: 'spacetycoon:ship-design', version: 1, design });
         toast('Проект отправлен на верфь SpaceTycoon');
       });
+      window.addEventListener('message', event => {
+        if (event.source !== window.parent || event.origin !== window.location.origin) return;
+        const data = event.data;
+        if (!data || data.type !== 'spacetycoon:load-design' || data.version !== 1 || !data.design || !presets[data.design.preset]) return;
+        const preset = data.design.preset, incoming = data.design.params || {};
+        Object.assign(params, presets[preset], { preset });
+        const keys = ['seed','length','width','height','span','sweep','segments','wingType','nozzles','plasma','glow','greebles','turrets','antennas','scanners','hullColor','accentColor','metalness','roughness','navGlow'];
+        for (const key of keys) {
+          if (!(key in incoming)) continue;
+          const value = incoming[key];
+          if (key === 'seed') { params.seed = safeSeed(value); continue; }
+          const input = document.querySelector('[data-param="' + key + '"]');
+          if (!input) continue;
+          if (input.type === 'checkbox') params[key] = !!value;
+          else if (input.type === 'range' || input.type === 'number') { const n = Number(value); if (Number.isFinite(n)) params[key] = Math.max(Number(input.min), Math.min(Number(input.max), n)); }
+          else if (input.type === 'color') { if (/^#[0-9a-f]{6}$/i.test(String(value))) params[key] = String(value); }
+          else if (input.tagName === 'SELECT') { if ([...input.options].some(option => option.value === String(value))) params[key] = String(value); }
+          else if (key === 'plasma' && /^#[0-9a-f]{6}$/i.test(String(value))) params[key] = String(value);
+        }
+        syncUI(); generateShip(); fitCamera('perspective', true);
+        toast('Проект загружен из ангара SpaceTycoon');
+      });
       send({ type: 'spacetycoon:builder-ready', version: 1 });
     }
 
