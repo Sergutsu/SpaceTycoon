@@ -1,6 +1,6 @@
 # SpaceTycoon — Game Design Document
 
-**Version:** 0.2 — Expanded Working Prototype  
+**Version:** 0.2.1 — Expanded Working Prototype  
 **Platform:** Modern desktop and mobile browsers  
 **Delivery:** Static HTML/CSS/JS, no backend or build step  
 **Language:** Russian UI, English code identifiers  
@@ -312,9 +312,14 @@ engine.js          Simulation/economy/save logic, no DOM rendering
 ui.js              Icons, schematics, formatters, charts
 views.js           View renderers and modal content
 app.js             Shell, navigation, lifecycle, input, builder bridge
+morphdom.min.js    Local MIT DOM patching library
 orbit-background.js Persistent WebGL background
 builder.html       Embedded procedural ship builder
 ```
+
+### UI update strategy
+
+The simulation tick runs every 250 ms, but it does not redraw the whole screen. High-frequency values (clock, top-bar resources, mission/queue timers, progress bars) are updated in place through `data-time` / `data-progress` hooks. A lightweight state signature detects structural or economic changes; only then is the current view re-rendered, and the new HTML is applied with `morphdom` so existing DOM nodes, focus, scroll position, and uncontrolled input values are preserved. The view entrance animation runs only when navigating to a different view, not on live updates.
 
 Builder bridge:
 

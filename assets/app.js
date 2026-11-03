@@ -6,7 +6,7 @@
   const navItems = [
     ['overview', 'Обзор', 'overview'], ['map', 'Орбитальная карта', 'orbit'], ['contracts', 'Контракты', 'contracts'], ['fleet', 'Флот', 'fleet'], ['shipyard', 'Верфь', 'shipyard'], ['station', 'Станция', 'station'], ['crew', 'Экипаж', 'crew'], ['research', 'Исследования', 'research'], ['market', 'Рынок', 'market'], ['finance', 'Финансы', 'finance'], ['reputation', 'Репутация', 'reputation']
   ];
-  let currentView = 'overview', modal = null, previousFocus = null, builderContext = null, lastTick = performance.now(), lastRender = 0, audio = null, renderQueued = false;
+  let currentView = 'overview', modal = null, previousFocus = null, builderContext = null, lastTick = performance.now(), audio = null, renderQueued = false, lastView = null, lastSignature = '';
   const icon = U.icon, esc = U.esc;
   function toast(message, kind = 'info', force = false) {
     if (!force && E.state.settings.notifications === false) return;
@@ -33,23 +33,63 @@
     closeModal(); closeNav(); render(); window.scrollTo({ top: 0, behavior: 'instant' });
   }
   function closeNav() { $('sidebar').classList.remove('open'); $('navScrim').classList.remove('open'); $('menuButton').setAttribute('aria-expanded', 'false'); }
+  function patchHTML(el, html) {
+    const target = document.createElement(el.tagName);
+    target.innerHTML = html;
+    window.morphdom(el, target, {
+      childrenOnly: true,
+      onBeforeElUpdated(from, to) {
+        if (from.isEqualNode(to)) return false;
+        const tag = from.tagName;
+        if ((tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') && (from === document.activeElement || from.hasAttribute('data-preserve'))) {
+          if (tag === 'SELECT') to.value = from.value;
+          else { to.value = from.value; if (from.type === 'checkbox' || from.type === 'radio') to.checked = from.checked; }
+        }
+        if (from.classList && from.classList.contains('view-enter') && to.classList && to.classList.contains('view-body')) to.classList.add('view-enter');
+        return true;
+      }
+    });
+  }
   function renderNav() {
     const counts = { contracts: E.state.contracts.length, fleet: E.state.ships.length, crew: E.state.crew.length, research: E.state.research ? '●' : '' };
-    $('nav').innerHTML = navItems.map(([id, label, ic]) => `<button class="nav-btn ${currentView === id ? 'active' : ''}" data-view="${id}" ${currentView === id ? 'aria-current="page"' : ''} title="${label}">${icon(ic)}<span>${label}</span>${counts[id] ? `<span class="nav-count">${counts[id]}</span>` : ''}</button>`).join('');
+    patchHTML($('nav'), navItems.map(([id, label, ic]) => `<button class="nav-btn ${currentView === id ? 'active' : ''}" data-view="${id}" ${currentView === id ? 'aria-current="page"' : ''} title="${label}">${icon(ic)}<span>${label}</span>${counts[id] ? `<span class="nav-count">${counts[id]}</span>` : ''}</button>`).join(''));
   }
   function renderResources() {
-    $('resources').innerHTML = ['credits', 'alloy', 'fuel', 'research', 'reputation'].map(k => `<div class="resource" title="${U.resourceNames[k]}"><span class="${U.resourceColors[k]}">${icon(U.resourceIcons[k])}</span><div><div class="resource-value" id="res-${k}">${U.fmt(E.state.resources[k])}${k === 'credits' ? ' ₡' : ''}</div><div class="resource-label">${U.resourceNames[k].toUpperCase()}</div></div></div>`).join('');
-    $('clock').textContent = E.clock(); $('clockDay').textContent = `ДЕНЬ ${E.day()} · ${E.state.speed === 0 ? 'ПАУЗА' : E.state.speed + '×'}`;
+    if (!$('res-credits')) {
+      $('resources').innerHTML = ['credits', 'alloy', 'fuel', 'research', 'reputation'].map(k => `<div class="resource" title="${U.resourceNames[k]}"><span class="${U.resourceColors[k]}">${icon(U.resourceIcons[k])}</span><div><div class="resource-value" id="res-${k}">${U.fmt(E.state.resources[k])}${k === 'credits' ? ' ₡' : ''}</div><div class="resource-label">${U.resourceNames[k].toUpperCase()}</div></div></div>`).join('');
+    }
+    updateLive();
     document.querySelectorAll('.speed-btn').forEach(b => { const active = +b.dataset.speed === E.state.speed; b.classList.toggle('active', active); b.setAttribute('aria-pressed', String(active)); });
     $('saveNote').textContent = 'Автосохранение ' + (E.state.settings.autoSave ? 'включено' : 'выключено');
+  }
+  function stateSignature() {
+    const s = E.state;
+    return JSON.stringify({
+      view: currentView, ui: V.ui, day: E.day(), speed: s.speed, resources: s.resources, modules: s.modules, techs: s.techs,
+      research: s.research ? s.research.key : null,
+      ships: s.ships.map(x => [x.id, x.status, x.condition, x.crew, x.missions, x.earned, x.value, x.name, x.preset]),
+      crew: s.crew.map(c => [c.id, c.status, c.skill, c.morale, c.shipId, c.name]),
+      candidates: s.candidates.map(c => c.id),
+      contracts: s.contracts.map(c => c.id), missions: s.missions.map(m => m.id),
+      build: s.buildQueue.map(j => [j.id, j.waiting]), repair: s.repairQueue.map(j => j.id), moduleQueue: s.moduleQueue.map(j => j.id),
+      events: s.events.map(e => e.key), claimed: s.claimed, factions: s.factions, metrics: s.metrics,
+      ledger: s.ledger.length, daily: s.daily.map(d => [d.day, d.income, d.expenses, d.missions]),
+      market: s.market, settings: s.settings, log: s.log.length
+    });
   }
   function render() {
     renderQueued = false;
     const active = document.activeElement, focusId = active?.id, selection = active && 'selectionStart' in active ? [active.selectionStart, active.selectionEnd] : null;
     renderNav(); renderResources();
-    $('main').innerHTML = V.render(currentView) + `<footer class="footer"><span>SPACETYCOON · РАСШИРЕННЫЙ ПРОТОТИП 0.2</span><span id="footerSave">СТАНЦИЯ «АВРОРА» · ДЕНЬ ${E.day()}</span></footer>`;
-    if (focusId && $(focusId) && !modal) { $(focusId).focus({ preventScroll: true }); if (selection && $(focusId).setSelectionRange) try { $(focusId).setSelectionRange(...selection); } catch (e) {} }
-    lastRender = performance.now();
+    const html = V.render(currentView) + `<footer class="footer"><span>SPACETYCOON · РАСШИРЕННЫЙ ПРОТОТИП 0.2.1</span><span id="footerSave">СТАНЦИЯ «АВРОРА» · ДЕНЬ ${E.day()}</span></footer>`;
+    patchHTML($('main'), html);
+    if (currentView !== lastView) {
+      const body = $('main').querySelector('.view-body');
+      if (body) { body.classList.add('view-enter'); setTimeout(() => body.classList.remove('view-enter'), 300); }
+      lastView = currentView;
+    }
+    if (focusId && $(focusId) && !modal && document.activeElement !== $(focusId)) { $(focusId).focus({ preventScroll: true }); if (selection && $(focusId).setSelectionRange) try { $(focusId).setSelectionRange(...selection); } catch (e) {} }
+    lastSignature = stateSignature();
   }
   function queueRender() { if (!renderQueued) { renderQueued = true; requestAnimationFrame(render); } }
   function liveMap() {
@@ -156,7 +196,7 @@
       case 'confirm-dismiss': resultToast(E.dismissCrew(id)); closeModal(); break;
       case 'trade': { const qty = $('qty-' + id)?.value || 1; resultToast(E.trade(id, button.dataset.side, qty)); break; }
       case 'claim': resultToast(E.claimAchievement(id)); break;
-      case 'toggle-setting': { const key = id; E.setSetting(key, !E.state.settings[key]); if (key === 'background') window.STBackground?.setQuality(E.state.settings.background); if (modal && V.ui.view) { const scroll = modal.querySelector('.modal')?.scrollTop || 0; openModal(V.modalSettings(), { title: 'Настройки', wide: true }); const m = modal.querySelector('.modal'); if (m) m.scrollTop = scroll; } else render(); break; }
+      case 'toggle-setting': { const key = id; E.setSetting(key, !E.state.settings[key]); if (key === 'background') window.STBackground?.setQuality(E.state.settings.background); if (modal && button.classList.contains('switch')) button.setAttribute('aria-checked', String(E.state.settings[key])); else render(); break; }
       case 'export': download('spacetycoon-save.json', E.exportSave(), 'application/json'); toast('Сохранение экспортировано.', 'good', true); break;
       case 'import': $('importFile').click(); break;
       case 'export-ledger': exportLedger(); break;
@@ -206,8 +246,8 @@
     const now = performance.now(), dt = Math.min(2, (now - lastTick) / 1000); lastTick = now;
     if (E.state.speed > 0 && !document.hidden) E.advance(dt * E.state.speed);
     updateLive();
-    const editing = /INPUT|SELECT|TEXTAREA/.test(document.activeElement?.tagName || '');
-    if (now - lastRender > 1800 && !editing) render();
+    const signature = stateSignature();
+    if (signature !== lastSignature) { lastSignature = signature; queueRender(); }
   }, 250);
   setInterval(() => { if (E.state.settings.autoSave) E.save(); }, 15000);
   if (E.offlineSummary) {
@@ -215,5 +255,5 @@
     openModal(`<div class="modal-head"><div><div class="eyebrow">СМЕНА ЗАВЕРШЕНА</div><h2 class="modal-title">С возвращением, директор</h2><p class="modal-sub">Оффлайн-прогресс: ${E.duration(o.elapsed)} (максимум 8 часов).</p></div></div><div class="offline-grid"><div><b>${U.signed(o.credits)}</b><span>кредиты</span></div><div><b>${U.signed(o.alloy)}</b><span>сплав</span></div><div><b>${U.signed(o.research)}</b><span>исследования</span></div></div><p class="hint">Миссии, очереди, производство и содержание обработаны за время отсутствия.</p><div class="modal-actions"><button class="btn btn-primary" data-action="close-modal">Продолжить</button></div>`, { title: 'Оффлайн-прогресс' });
     E.clearOffline();
   }
-  window.SpaceTycoon = Object.freeze({ version: '0.2.0', get state() { return E.clone(E.state); }, engine: E, views: V, navigate, save: () => E.save(true), get background() { return window.STBackground?.diagnostics; } });
+  window.SpaceTycoon = Object.freeze({ version: '0.2.1', get state() { return E.clone(E.state); }, engine: E, views: V, navigate, save: () => E.save(true), get background() { return window.STBackground?.diagnostics; } });
 })();
